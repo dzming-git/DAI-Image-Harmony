@@ -11,10 +11,14 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(SOURCES
     main.cpp
-    src/http_server.cpp)
+    src/http_server.cpp
+    src/image_loaders.cpp
+    )
 
 set(HEADERS
-    include/http_server.h)
+    include/http_server.h
+    include/image_loaders.h
+    )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})

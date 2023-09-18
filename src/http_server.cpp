@@ -1,4 +1,5 @@
 #include "http_server.h"
+#include "image_loaders.h"
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <unistd.h>
@@ -44,13 +45,14 @@ inline std::string matToBase64(const cv::Mat& image) {
 
 inline std::string handle_request(const std::string& request) {
     // 在这里处理请求并返回响应
-    cv::Mat image = cv::imread("../tests/images/lena.png", cv::IMREAD_COLOR);
+    ImageLoaderBase* imgLoader = ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType::LocalImage);
+    imgLoader->setSource("../tests/images/lena.png");
 
-    if (image.empty()) {
+    if (!imgLoader->hasNext()) {
         return "HTTP/1.1 404 Not Found\nContent-Type: text/html\n\n404 Not Found";
     }
 
-    std::string encodedImage = matToBase64(image);
+    std::string encodedImage = matToBase64(imgLoader->next());
 
     std::string html = "<!DOCTYPE html>\n"
                        "<html>\n"
