@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks":[
+        {
+            "label": "cmake",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-DCMAKE_BUILD_TYPE=Debug", 
+                ".."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            }
+        },
+        {
+            "label": "make",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "dependsOn": ["cmake"] 
+        },
+        {
+            "label": "docker-run-windows",
+            "type": "shell",
+            "command":[
+                "docker", "run", 
+                "-it",
+                "-p", "0.0.0.0:8002:5000",
+                "image_harmony", "/bin/bash",
+            ],
+            "group":{
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "docker-run-linux",
+            "type": "shell",
+            "command":[
+                "docker", "run", 
+                "-it",
+                "--gpus", "all",
+                "-p", "0.0.0.0:8002:5000",
+                "image_harmony", "/bin/bash"
+            ],
+            "group":{
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
