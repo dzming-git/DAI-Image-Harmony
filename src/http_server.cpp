@@ -1,5 +1,5 @@
 #include "http_server.h"
-#include "image_loaders.h"
+#include "image_loader_factory.h"
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <unistd.h>

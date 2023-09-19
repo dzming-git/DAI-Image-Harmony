@@ -1,4 +1,4 @@
-#include "image_loaders.h"
+#include "local_image_loader.h"
 
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
 }
@@ -29,15 +29,4 @@ size_t LocalImageLoader::getCurrentIndex() {
 }
 
 LocalImageLoader::~LocalImageLoader() {
-}
-
-ImageLoaderBase *ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType type) {
-    switch (type) {
-    case ImageLoaderFactory::SourceType::LocalImage:
-        return new LocalImageLoader();
-    }
-    return nullptr;
-}
-
-ImageLoaderBase::~ImageLoaderBase() {
 }
