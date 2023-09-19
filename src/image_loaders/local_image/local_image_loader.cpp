@@ -3,9 +3,10 @@
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
 }
 
-void LocalImageLoader::setSource(std::initializer_list<std::string> paths) {
+bool LocalImageLoader::setSource(std::initializer_list<std::string> paths) {
     this->paths = paths;
     totalCnt = this->paths.size();
+    return true;
 }
 
 bool LocalImageLoader::hasNext() {

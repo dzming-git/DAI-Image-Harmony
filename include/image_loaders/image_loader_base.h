@@ -18,7 +18,7 @@
 
 class ImageLoaderBase {
 public:
-    virtual void setSource(std::initializer_list<std::string>) = 0;
+    virtual bool setSource(std::initializer_list<std::string>) = 0;
     virtual bool hasNext() = 0;
     virtual cv::Mat next() = 0;
     virtual size_t getTotalCount() = 0;

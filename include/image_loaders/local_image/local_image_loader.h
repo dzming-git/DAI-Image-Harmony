@@ -19,7 +19,7 @@
 class LocalImageLoader : public ImageLoaderBase {
 public:
     LocalImageLoader();
-    void setSource(std::initializer_list<std::string> paths) override;
+    bool setSource(std::initializer_list<std::string> paths) override;
     virtual bool hasNext() override;
     virtual cv::Mat next() override;
     virtual size_t getTotalCount() override;
