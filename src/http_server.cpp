@@ -46,8 +46,7 @@ inline std::string matToBase64(const cv::Mat& image) {
 inline std::string handle_request(const std::string& request) {
     // 在这里处理请求并返回响应
     ImageLoaderBase* imgLoader = ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType::LocalImage);
-    imgLoader->setSource("../tests/images/lena.png");
-
+    imgLoader->setSource({"../tests/images/lena.png"});
     if (!imgLoader->hasNext()) {
         return "HTTP/1.1 404 Not Found\nContent-Type: text/html\n\n404 Not Found";
     }
