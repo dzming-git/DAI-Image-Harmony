@@ -12,7 +12,11 @@ RUN apt update && \
         build-essential \
         wget \
         unzip \
-        net-tools && \
+        net-tools \
+        ffmpeg \
+        libsm6 \
+        libxext6 \
+        libgl1 && \
     apt purge -y --auto-remove
 
 ENV OPENCV_VERSION='4.8.0' DEBIAN_FRONTEND=noninteractive
