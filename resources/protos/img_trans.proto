@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package imgTrans;
+
+service Communicate
+{
+    rpc getImg(NullMsg) returns (ImgMsg) {}
+}
+
+message NullMsg
+{}
+
+message ImgMsg
+{
+    int32 w = 1;
+    int32 h = 2;
+    bytes buf = 3;
+}
+
+// protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` img_trans.proto
+// protoc --cpp_out=. ./img_trans.proto 
