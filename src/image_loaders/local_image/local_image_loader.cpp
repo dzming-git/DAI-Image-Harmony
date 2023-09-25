@@ -1,4 +1,4 @@
-#include "local_image_loader.h"
+#include "image_loaders/local_image/local_image_loader.h"
 
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
 }

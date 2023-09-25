@@ -13,7 +13,7 @@
 #ifndef _WEBCAMERA_HIKVISION_H_
 #define _WEBCAMERA_HIKVISION_H_
 
-#include "image_loader_base.h"
+#include "image_loaders/image_loader_base.h"
 
 class WebcameraHikvisionLoader : public ImageLoaderBase {
 public:

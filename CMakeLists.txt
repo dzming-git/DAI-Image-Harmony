@@ -91,9 +91,6 @@ target_link_libraries(data_grpc_proto
 # include
 include_directories("${GENERATED_OUT_PATH}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${PROJECT_SOURCE_DIR}/include/image_loaders")
-include_directories("${PROJECT_SOURCE_DIR}/include/image_loaders/local_image")
-include_directories("${PROJECT_SOURCE_DIR}/include/image_loaders/webcamera_hikvision")
 
 set(SOURCES
     main.cpp

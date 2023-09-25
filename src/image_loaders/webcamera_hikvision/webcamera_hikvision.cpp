@@ -1,4 +1,4 @@
-#include "webcamera_hikvision.h"
+#include "image_loaders/webcamera_hikvision/webcamera_hikvision.h"
 #include "HCNetSDK.h"
 #include "LinuxPlayM4.h"
 #include <unistd.h>

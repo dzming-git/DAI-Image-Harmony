@@ -13,7 +13,7 @@
 #ifndef _IMAGE_LOADER_FACTORY_H_
 #define _IMAGE_LOADER_FACTORY_H_
 
-#include "image_loader_base.h"
+#include "image_loaders/image_loader_base.h"
 
 class ImageLoaderFactory {
 public:

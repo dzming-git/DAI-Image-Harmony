@@ -13,7 +13,7 @@
 #ifndef _LOCAL_IMAGE_LOADER_H_
 #define _LOCAL_IMAGE_LOADER_H_
 
-#include "image_loader_base.h"
+#include "image_loaders/image_loader_base.h"
 #include <vector>
 
 class LocalImageLoader : public ImageLoaderBase {

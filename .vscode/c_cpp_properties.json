@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/usr/local/include/opencv4",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/image_loaders/local_image"
+                "${workspaceFolder}/generated"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -1,4 +1,4 @@
-#include "image_loader_base.h"
+#include "image_loaders/image_loader_base.h"
 
 ImageLoaderBase::~ImageLoaderBase() {
 }
