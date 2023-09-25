@@ -17,10 +17,7 @@
 
 class ImageLoaderFactory {
 public:
-    enum SourceType {
-        LocalImage,
-        WebcameraHikvision
-    };
+    enum SourceType : uint8_t;
     static ImageLoaderBase* createImageLoader(ImageLoaderFactory::SourceType type);
 };
 
