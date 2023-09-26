@@ -14,7 +14,6 @@
 #define _HTTP_SERVER_H_
 
 #include <string>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 
 class HttpServer {
@@ -23,6 +22,7 @@ public:
     std::string getHost();
     uint16_t getPort();
     void start();
+    ~HttpServer();
 private:
     HttpServer(HttpServer::Builder* builder);
 
@@ -30,19 +30,7 @@ private:
     uint16_t port;
     int fd; // 套接字
     struct sockaddr_in address;  // 地址
-};
-
-class HttpServer::Builder {
-public:
-    Builder();
-    std::string getHost();
-    uint16_t getPort();
-    void setHost(std::string host);
-    void setPort(uint16_t port);
-    HttpServer* build();
-private:
-    std::string host;
-    uint16_t port;
+    int newSocket;
 };
 
 #endif /* _HTTP_SERVER_H_ */

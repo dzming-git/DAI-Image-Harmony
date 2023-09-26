@@ -94,7 +94,11 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(SOURCES
     main.cpp
-    src/http_server.cpp
+    src/http_server/http_server.cpp
+    src/http_server/http_server_builder.cpp
+    src/http_server/http_response_handler/http_response_handler_base.cpp
+    src/http_server/http_response_handler/http_response_handler_factory.cpp
+    src/http_server/http_response_handler/http_response_handler_test.cpp
     src/image_loaders/image_loader_base.cpp
     src/image_loaders/image_loader_factory.cpp
     src/image_loaders/local_image/local_image_loader.cpp
@@ -104,7 +108,11 @@ set(SOURCES
     )
 
 set(HEADERS
-    include/http_server.h
+    include/http_server/http_server.h
+    include/http_server/http_server_builder.h
+    include/http_server/http_response_handler/http_response_handler_base.h
+    include/http_server/http_response_handler/http_response_handler_factory.h
+    include/http_server/http_response_handler/http_response_handler_test.h
     include/image_loaders/image_loader_base.h
     include/image_loaders/image_loader_factory.h
     include/image_loaders/local_image/local_image_loader.h
