@@ -17,8 +17,16 @@
 
 class ImageLoaderFactory {
 public:
-    enum SourceType : uint8_t;
-    static ImageLoaderBase* createImageLoader(ImageLoaderFactory::SourceType type);
+    enum class SourceType {
+        LocalImage,
+        LocalVideo,
+        WebImage,
+        WebVideo,
+        WebCameraHikvision,
+        GRPCImage,
+        GRPCVideo,
+    };
+    static ImageLoaderBase* createImageLoader(ImageLoaderFactory::SourceType);
 };
 
 #endif /* _IMAGE_LOADER_FACTORY_H_ */
