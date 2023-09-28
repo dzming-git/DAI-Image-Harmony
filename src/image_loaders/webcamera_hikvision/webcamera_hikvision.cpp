@@ -112,7 +112,12 @@ bool WebcameraHikvisionLoader::setSource(std::vector<std::string> cameraInfo) {
     return true;
 }
 
-bool WebcameraHikvisionLoader::hasNext() {
+bool WebcameraHikvisionLoader::isUnique() {
+    return false;
+}
+
+bool WebcameraHikvisionLoader::hasNext()
+{
     return playOk;
 }
 

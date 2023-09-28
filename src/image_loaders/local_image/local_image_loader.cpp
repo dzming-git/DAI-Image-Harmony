@@ -9,7 +9,12 @@ bool LocalImageLoader::setSource(std::vector<std::string> paths) {
     return true;
 }
 
-bool LocalImageLoader::hasNext() {
+bool LocalImageLoader::isUnique() {
+    return true;
+}
+
+bool LocalImageLoader::hasNext()
+{
     return currIdx < totalCnt;
 }
 

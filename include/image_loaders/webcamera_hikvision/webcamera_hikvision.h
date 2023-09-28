@@ -21,6 +21,7 @@ public:
     virtual ~WebcameraHikvisionLoader() override;
 
     bool setSource(std::vector<std::string> cameraInfo) override;
+    virtual bool isUnique() override;
     virtual bool hasNext() override;
     virtual cv::Mat next() override;
     virtual size_t getTotalCount() override;
