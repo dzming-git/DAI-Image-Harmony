@@ -44,12 +44,12 @@ WebcameraHikvisionLoader::~WebcameraHikvisionLoader() {
     }
 }
 
-bool WebcameraHikvisionLoader::setSource(std::initializer_list<std::string> cameraInfo) {
+bool WebcameraHikvisionLoader::setSource(std::vector<std::string> cameraInfo) {
     if (4!=cameraInfo.size()) return false;
-    std::string address  = *(cameraInfo.begin() + 0);
-    std::string userName = *(cameraInfo.begin() + 1);
-    std::string password = *(cameraInfo.begin() + 2);
-    std::string port     = *(cameraInfo.begin() + 3);
+    std::string address  = cameraInfo[0];
+    std::string userName = cameraInfo[1];
+    std::string password = cameraInfo[2];
+    std::string port     = cameraInfo[3];
 
     NET_DVR_USER_LOGIN_INFO pLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0};

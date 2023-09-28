@@ -3,7 +3,7 @@
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
 }
 
-bool LocalImageLoader::setSource(std::initializer_list<std::string> paths) {
+bool LocalImageLoader::setSource(std::vector<std::string> paths) {
     this->paths = paths;
     totalCnt = this->paths.size();
     return true;

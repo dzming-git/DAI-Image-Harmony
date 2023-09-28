@@ -20,7 +20,7 @@ public:
     WebcameraHikvisionLoader();
     virtual ~WebcameraHikvisionLoader() override;
 
-    bool setSource(std::initializer_list<std::string> cameraInfo) override;
+    bool setSource(std::vector<std::string> cameraInfo) override;
     virtual bool hasNext() override;
     virtual cv::Mat next() override;
     virtual size_t getTotalCount() override;
