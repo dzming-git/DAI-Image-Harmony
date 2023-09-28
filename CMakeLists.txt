@@ -105,6 +105,7 @@ set(SOURCES
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.cpp
     src/grpc/grpc_server.cpp
     src/grpc/grpc_server_builder.cpp
+    src/grpc/serviecs/img_trans/img_trans.cpp
     )
 
 set(HEADERS
@@ -119,6 +120,7 @@ set(HEADERS
     include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
     include/grpc/grpc_server.h
     include/grpc/grpc_server_builder.h
+    include/grpc/serviecs/img_trans/img_trans.h
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

@@ -2,19 +2,32 @@ syntax = "proto3";
 
 package imgTrans;
 
-service Communicate
-{
-    rpc getImg(NullMsg) returns (ImgMsg) {}
+service Communicate {
+    rpc registerImgTransService(RegisterImgTransServiceRequest) returns (RegisterImgTransServiceResponse) {}
+    rpc getImg(GetImgRequest) returns (GetImgResponse) {}
 }
 
-message NullMsg
-{}
+message NullRequest {}
+message NullResponse {}
 
-message ImgMsg
-{
+message RegisterImgTransServiceRequest {
+    string imgType = 1;
+    repeated string sources = 2;
+}
+
+message RegisterImgTransServiceResponse {
+    int64 connectId = 1;
+}
+
+message GetImgRequest {
+    int64 connectId = 1;
+}
+
+message GetImgResponse {
     int32 w = 1;
     int32 h = 2;
-    bytes buf = 3;
+    int64 imgId = 3;
+    bytes buf = 4;
 }
 
 // protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` img_trans.proto
