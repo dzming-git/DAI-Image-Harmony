@@ -20,7 +20,21 @@ int64_t generateRandomInt64() {
     return distribution(generator);
 }
 
+std::size_t hashCombine(std::size_t seed, const std::string& str) {
+    std::hash<std::string> hasher;
+    return seed ^= hasher(str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+std::int64_t hashVector(const std::vector<std::string>& vec) {
+    std::int64_t hash_value = 0;
+    for (const auto& str : vec) {
+        hash_value = hashCombine(hash_value, str);
+    }
+    return hash_value;
+}
+
 grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
+    // TODO: 该映射表的key未来考虑通过grpc发送出去
     static std::unordered_map<std::string, ImageLoaderFactory::SourceType> sourceTypeMap = {
         {"hikvision", ImageLoaderFactory::SourceType::WebCameraHikvision},
         {"local image", ImageLoaderFactory::SourceType::LocalImage}
@@ -28,20 +42,31 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
     response->set_connectid(-1);
     auto imgType = sourceTypeMap.find(request->imgtype());
     if (sourceTypeMap.end() != imgType) {
-        ImageLoaderBase* imgLoader = ImageLoaderFactory::createImageLoader(imgType->second);
         int sourceCnt = request->sources_size();
         std::vector<std::string> sources(sourceCnt);
         for (int i = 0; i < sourceCnt; ++i) {
             sources[i] = request->sources(i);
         }
-        if (nullptr != imgLoader) {
-            imgLoader->setSource(sources);
-            // TODO: 临时使用本地随机数生成器，未来再接入分布式唯一ID生成器
-            int64_t connectId = generateRandomInt64();
-            imgLoaders.emplace(connectId, imgLoader);
-            response->set_connectid(connectId);
+        // TODO: 未来考虑分布式ID 用哈希值建立一个分布式ID映射
+        int64_t connectId = hashVector(sources);
+        auto imgLoaderIt = imgLoaders.find(connectId);
+        ImageLoaderBase* imgLoader = nullptr;
+        bool needCreateImageLoader = imgLoaders.end() == imgLoaderIt || imgLoader->isUnique();
+        // 连接独占的加载器需要新建
+        if (imgLoaders.end() != imgLoaderIt && imgLoader->isUnique()) {
+            // 防止connectId重复
+            // TODO: 未来考虑分布式ID
+            do {
+                connectId = generateRandomInt64();
+            } while (imgLoaders.find(connectId) != imgLoaders.end());
+            needCreateImageLoader = true;
         }
-        
+        if (needCreateImageLoader) {
+            imgLoader = ImageLoaderFactory::createImageLoader(imgType->second);
+            imgLoaders.emplace(connectId, imgLoader);
+            imgLoader->setSource(sources);
+        }
+        response->set_connectid(connectId);
     }
     return grpc::Status::OK;
 }
