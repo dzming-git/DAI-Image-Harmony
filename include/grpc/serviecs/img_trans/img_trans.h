@@ -25,5 +25,4 @@ public:
     virtual grpc::Status registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest*, imgTrans::RegisterImgTransServiceResponse*) override;
     virtual grpc::Status getImg(grpc::ServerContext*, const imgTrans::GetImgRequest*, imgTrans::GetImgResponse*) override;
 private:
-    std::unordered_map<int64_t, ImageLoaderBase*> imgLoaders;
 };

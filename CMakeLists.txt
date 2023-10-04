@@ -101,6 +101,7 @@ set(SOURCES
     src/http_server/http_response_handler/http_response_handler_test.cpp
     src/image_loaders/image_loader_base.cpp
     src/image_loaders/image_loader_factory.cpp
+    src/image_loaders/image_loader_controller.cpp
     src/image_loaders/local_image/local_image_loader.cpp
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.cpp
     src/grpc/grpc_server.cpp
@@ -116,6 +117,7 @@ set(HEADERS
     include/http_server/http_response_handler/http_response_handler_test.h
     include/image_loaders/image_loader_base.h
     include/image_loaders/image_loader_factory.h
+    include/image_loaders/image_loader_controller.h
     include/image_loaders/local_image/local_image_loader.h
     include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
     include/grpc/grpc_server.h

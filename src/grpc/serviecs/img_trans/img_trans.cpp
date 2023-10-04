@@ -1,5 +1,6 @@
 #include "grpc/serviecs/img_trans/img_trans.h"
 #include "image_loaders/image_loader_factory.h"
+#include "image_loaders/image_loader_controller.h"
 #include <chrono>
 #include <random>
 #include <vector>
@@ -8,29 +9,6 @@ ImgTransService::ImgTransService() {
 }
 
 ImgTransService::~ImgTransService() {
-}
-
-int64_t generateRandomInt64() {
-    std::random_device rd;
-    std::mt19937_64 generator(rd());
-    std::uniform_int_distribution<int64_t> distribution(
-        std::numeric_limits<int64_t>::min(),
-        std::numeric_limits<int64_t>::max()
-    );
-    return distribution(generator);
-}
-
-std::size_t hashCombine(std::size_t seed, const std::string& str) {
-    std::hash<std::string> hasher;
-    return seed ^= hasher(str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
-std::int64_t hashVector(const std::vector<std::string>& vec) {
-    std::int64_t hash_value = 0;
-    for (const auto& str : vec) {
-        hash_value = hashCombine(hash_value, str);
-    }
-    return hash_value;
 }
 
 grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
@@ -47,25 +25,8 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
         for (int i = 0; i < sourceCnt; ++i) {
             sources[i] = request->sources(i);
         }
-        // TODO: 未来考虑分布式ID 用哈希值建立一个分布式ID映射
-        int64_t connectId = hashVector(sources);
-        auto imgLoaderIt = imgLoaders.find(connectId);
-        ImageLoaderBase* imgLoader = nullptr;
-        bool needCreateImageLoader = imgLoaders.end() == imgLoaderIt || imgLoader->isUnique();
-        // 连接独占的加载器需要新建
-        if (imgLoaders.end() != imgLoaderIt && imgLoader->isUnique()) {
-            // 防止connectId重复
-            // TODO: 未来考虑分布式ID
-            do {
-                connectId = generateRandomInt64();
-            } while (imgLoaders.find(connectId) != imgLoaders.end());
-            needCreateImageLoader = true;
-        }
-        if (needCreateImageLoader) {
-            imgLoader = ImageLoaderFactory::createImageLoader(imgType->second);
-            imgLoaders.emplace(connectId, imgLoader);
-            imgLoader->setSource(sources);
-        }
+        auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+        int64_t connectId = imageLoaderController->registerImageLoader(sources, imgType->second);
         response->set_connectid(connectId);
     }
     return grpc::Status::OK;
@@ -74,10 +35,11 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
 grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response)
 {
     int64_t connectId = request->connectid();
-    auto imgLoader = imgLoaders.find(connectId);
+    auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+    auto imgLoader = imageLoaderController->getImageLoader(connectId);
     response->set_imgid(-1);
-    if (imgLoaders.end() != imgLoader) {
-        auto imgBGR = imgLoaders[connectId]->next();
+    if (imgLoader) {
+        auto imgBGR = imgLoader->next();
         response->set_h(imgBGR.rows);
         response->set_w(imgBGR.cols);
         // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
