@@ -19,6 +19,8 @@ RUN apt update && \
         libgl1 && \
     apt purge -y --auto-remove
 
+# 安装OpenCV
+
 ENV OPENCV_VERSION='4.8.0' DEBIAN_FRONTEND=noninteractive
 
 CMD ["echo", "140.82.114.4", "github.com", ">>", "/etc/hosts"]
@@ -39,11 +41,29 @@ RUN \
         .. && \
     make -j4 && \
     make install && \
-    ldconfig
+    ldconfig && \
+    rm -rf /OpenCV
 
-# git 配置
-RUN git config --global user.name "dzming" 
-RUN git config --global user.email "dzm_work@163.com"
+# 安装gRPC
+
+ENV GRPC_VERSION='1.58.1'
+
+RUN \
+    cd / && \
+    git clone https://github.com/grpc/grpc  && \
+    cd /grpc && \
+    git checkout v${GRPC_VERSION} && \
+    git submodule update --init && \
+    mkdir -p cmake/build && \
+    cd cmake/build && \
+    cmake ../.. && \
+    make && \
+    make install && \
+    cd third_party/protobuf/ && \
+    make && \
+    make install && \
+    ldconfig && \
+    rm -rf /grpc
 
 EXPOSE 5000
 
