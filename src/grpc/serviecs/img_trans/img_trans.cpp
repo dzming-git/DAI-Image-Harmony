@@ -38,7 +38,7 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
     auto imageLoaderController = ImageLoaderController::getSingletonInstance();
     auto imgLoader = imageLoaderController->getImageLoader(connectId);
     response->set_imgid(-1);
-    if (imgLoader) {
+    if (imgLoader && imgLoader->hasNext()) {
         auto imgBGR = imgLoader->next();
         response->set_h(imgBGR.rows);
         response->set_w(imgBGR.cols);
