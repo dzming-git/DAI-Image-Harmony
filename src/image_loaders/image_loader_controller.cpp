@@ -52,6 +52,9 @@ ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectId) {
 }
 
 int64_t ImageLoaderController::registerImageLoader(std::vector<std::string> sources, ImageLoaderFactory::SourceType type) {
+    // TODO: 暂时粗暴地解决线程安全问题
+    static pthread_mutex_t registerImageLoaderLock;
+    pthread_mutex_lock(&registerImageLoaderLock);
     // TODO: 未考虑哈希冲突
     int64_t connectId = hashVector(sources);
     auto imageLoaderIt = loadersMap.find(connectId);
@@ -78,6 +81,7 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::string> sour
         loadersMap[connectId].ptr->setSource(sources);
         loadersMap[connectId].cnt = 1;
     }
+    pthread_mutex_unlock(&registerImageLoaderLock);
     return connectId;
 }
 
