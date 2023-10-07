@@ -12,14 +12,9 @@ ImgTransService::~ImgTransService() {
 }
 
 grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
-    // TODO: 该映射表的key未来考虑通过grpc发送出去
-    static std::unordered_map<std::string, ImageLoaderFactory::SourceType> sourceTypeMap = {
-        {"hikvision", ImageLoaderFactory::SourceType::WebCameraHikvision},
-        {"local image", ImageLoaderFactory::SourceType::LocalImage}
-    };
     response->set_connectid(-1);
-    auto imgType = sourceTypeMap.find(request->imgtype());
-    if (sourceTypeMap.end() != imgType) {
+    auto imgType = ImageLoaderFactory::sourceTypeMap.find(request->imgtype());
+    if (ImageLoaderFactory::sourceTypeMap.end() != imgType) {
         int argsCnt = request->args_size();
         std::vector<std::pair<std::string, std::string>> args(argsCnt);
         for (int i = 0; i < argsCnt; ++i) {
