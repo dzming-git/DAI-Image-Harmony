@@ -19,7 +19,8 @@
 
 class ImageLoaderBase {
 public:
-    virtual bool setSource(std::vector<std::string>) = 0;
+    virtual bool setArgument(std::string, std::string) = 0;
+    virtual bool start() = 0;
     virtual bool isUnique() = 0;
     virtual bool hasNext() = 0;
     virtual cv::Mat next() = 0;

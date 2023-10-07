@@ -19,8 +19,12 @@ message UnregisterImgTransServiceResponse {
 }
 
 message RegisterImgTransServiceRequest {
+    message Argument {
+        string key = 1;
+        string value = 2;
+    }
     string imgType = 1;
-    repeated string sources = 2;
+    repeated Argument args = 2;
 }
 
 message RegisterImgTransServiceResponse {

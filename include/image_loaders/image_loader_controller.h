@@ -28,7 +28,7 @@ public:
     };
     static ImageLoaderController* getSingletonInstance();
     ImageLoaderBase* getImageLoader(int64_t);
-    int64_t registerImageLoader(std::vector<std::string>, ImageLoaderFactory::SourceType);
+    int64_t registerImageLoader(std::vector<std::pair<std::string, std::string>>, ImageLoaderFactory::SourceType);
     void unregisterImageLoader(int64_t);
 private:
     ImageLoaderController();

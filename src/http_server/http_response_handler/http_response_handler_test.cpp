@@ -42,7 +42,7 @@ inline std::string matToBase64(const cv::Mat& image) {
 
 HttpResponseHandlerTset::HttpResponseHandlerTset() {
     imgLoader = ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType::LocalImage);
-    imgLoader->setSource({"/workspace/tests/images/lena.png"});
+    imgLoader->setArgument("ImagePaths", "/workspace/tests/images/lena.png");
 }
 
 std::string HttpResponseHandlerTset::response(const std::string &) {

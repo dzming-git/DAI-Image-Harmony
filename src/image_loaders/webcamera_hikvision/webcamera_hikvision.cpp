@@ -36,6 +36,11 @@ totalCnt(0), currIdx(0), userId(-1), playOk(false) {
     initOk &= NET_DVR_SetReconnect(10000, true);
     videoBufInfo = new WebcameraHikvisionLoader::VideoBufInfo;
     videoBufInfo->bufShallowcopy = nullptr;
+
+    args.emplace("DeviceAddress", "");
+    args.emplace("UserName", "admin");
+    args.emplace("Password", "");
+    args.emplace("Port", "8000");
 }
 
 WebcameraHikvisionLoader::~WebcameraHikvisionLoader() {
@@ -48,21 +53,21 @@ WebcameraHikvisionLoader::~WebcameraHikvisionLoader() {
     }
 }
 
-bool WebcameraHikvisionLoader::setSource(std::vector<std::string> cameraInfo) {
-    if (4 != cameraInfo.size()) return false;
-    std::string address  = cameraInfo[0];
-    std::string userName = cameraInfo[1];
-    std::string password = cameraInfo[2];
-    std::string port     = cameraInfo[3];
+bool WebcameraHikvisionLoader::setArgument(std::string key, std::string value) {
+    if (args.end() == args.find(key)) return false;
+    args[key] = value;
+    return true;
+}
 
+bool WebcameraHikvisionLoader::start() {
     NET_DVR_USER_LOGIN_INFO pLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0};
 
     pLoginInfo.bUseAsynLogin = 0;  // 同步登录方式
-    strcpy(pLoginInfo.sDeviceAddress, address.c_str());
-    strcpy(pLoginInfo.sUserName, userName.c_str());
-    strcpy(pLoginInfo.sPassword, password.c_str());
-    pLoginInfo.wPort = atoi(port.c_str());
+    strcpy(pLoginInfo.sDeviceAddress, args["DeviceAddress"].c_str());
+    strcpy(pLoginInfo.sUserName, args["UserName"].c_str());
+    strcpy(pLoginInfo.sPassword, args["Password"].c_str());
+    pLoginInfo.wPort = atoi(args["Port"].c_str());
 
     userId = NET_DVR_Login_V40(&pLoginInfo, &lpDeviceInfo);
     if (userId < 0) {
@@ -124,8 +129,7 @@ bool WebcameraHikvisionLoader::isUnique() {
     return false;
 }
 
-bool WebcameraHikvisionLoader::hasNext()
-{
+bool WebcameraHikvisionLoader::hasNext() {
     return playOk;
 }
 

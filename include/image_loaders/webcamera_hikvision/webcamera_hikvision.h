@@ -14,13 +14,15 @@
 #define _WEBCAMERA_HIKVISION_H_
 
 #include "image_loaders/image_loader_base.h"
+#include <unordered_map>
 
 class WebcameraHikvisionLoader : public ImageLoaderBase {
 public:
     WebcameraHikvisionLoader();
     virtual ~WebcameraHikvisionLoader() override;
 
-    bool setSource(std::vector<std::string> cameraInfo) override;
+    bool setArgument(std::string, std::string) override;
+    virtual bool start() override;
     virtual bool isUnique() override;
     virtual bool hasNext() override;
     virtual cv::Mat next() override;
@@ -37,6 +39,7 @@ private:
     int nPort;
     long handle;
     WebcameraHikvisionLoader::VideoBufInfo* videoBufInfo;
+    std::unordered_map<std::string, std::string> args;
 };
 
 class WebcameraHikvisionLoader::VideoBufInfo {

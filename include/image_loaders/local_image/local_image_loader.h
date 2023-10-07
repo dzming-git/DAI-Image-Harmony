@@ -19,7 +19,8 @@
 class LocalImageLoader : public ImageLoaderBase {
 public:
     LocalImageLoader();
-    bool setSource(std::vector<std::string> paths) override;
+    bool setArgument(std::string, std::string) override;
+    virtual bool start() override;
     virtual bool isUnique() override;
     virtual bool hasNext() override;
     virtual cv::Mat next() override;

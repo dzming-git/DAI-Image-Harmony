@@ -20,13 +20,15 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
     response->set_connectid(-1);
     auto imgType = sourceTypeMap.find(request->imgtype());
     if (sourceTypeMap.end() != imgType) {
-        int sourceCnt = request->sources_size();
-        std::vector<std::string> sources(sourceCnt);
-        for (int i = 0; i < sourceCnt; ++i) {
-            sources[i] = request->sources(i);
+        int argsCnt = request->args_size();
+        std::vector<std::pair<std::string, std::string>> args(argsCnt);
+        for (int i = 0; i < argsCnt; ++i) {
+            auto arg = request->args(i);
+            args[i].first = arg.key();
+            args[i].second = arg.value();
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        int64_t connectId = imageLoaderController->registerImageLoader(sources, imgType->second);
+        int64_t connectId = imageLoaderController->registerImageLoader(args, imgType->second);
         response->set_connectid(connectId);
     }
     return grpc::Status::OK;
