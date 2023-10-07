@@ -32,6 +32,12 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
     return grpc::Status::OK;
 }
 
+grpc::Status ImgTransService::unregisterImgTransService(grpc::ServerContext *context, const imgTrans::UnregisterImgTransServiceRequest *request, imgTrans::UnregisterImgTransServiceResponse *response) {
+    int64_t connectId = request->connectid();
+    auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+    imageLoaderController->unregisterImageLoader(connectId);
+    return grpc::Status::OK;
+}
 grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response)
 {
     int64_t connectId = request->connectid();

@@ -4,11 +4,19 @@ package imgTrans;
 
 service Communicate {
     rpc registerImgTransService(RegisterImgTransServiceRequest) returns (RegisterImgTransServiceResponse) {}
+    rpc unregisterImgTransService(UnregisterImgTransServiceRequest) returns (UnregisterImgTransServiceResponse) {}
     rpc getImg(GetImgRequest) returns (GetImgResponse) {}
 }
 
 message NullRequest {}
 message NullResponse {}
+
+message UnregisterImgTransServiceRequest {
+    int64 connectId = 1;
+}
+
+message UnregisterImgTransServiceResponse {
+}
 
 message RegisterImgTransServiceRequest {
     string imgType = 1;

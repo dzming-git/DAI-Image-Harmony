@@ -23,6 +23,7 @@ public:
     virtual ~ImgTransService();
 
     virtual grpc::Status registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest*, imgTrans::RegisterImgTransServiceResponse*) override;
+    virtual grpc::Status unregisterImgTransService(grpc::ServerContext*, const imgTrans::UnregisterImgTransServiceRequest*, imgTrans::UnregisterImgTransServiceResponse*) override;
     virtual grpc::Status getImg(grpc::ServerContext*, const imgTrans::GetImgRequest*, imgTrans::GetImgResponse*) override;
 private:
 };
