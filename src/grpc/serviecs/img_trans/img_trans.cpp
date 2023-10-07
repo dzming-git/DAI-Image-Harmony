@@ -13,19 +13,25 @@ ImgTransService::~ImgTransService() {
 
 grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
     response->set_connectid(-1);
-    auto imgType = ImageLoaderFactory::sourceTypeMap.find(request->imgtype());
-    if (ImageLoaderFactory::sourceTypeMap.end() != imgType) {
-        int argsCnt = request->args_size();
-        std::vector<std::pair<std::string, std::string>> args(argsCnt);
-        for (int i = 0; i < argsCnt; ++i) {
-            auto arg = request->args(i);
-            args[i].first = arg.key();
-            args[i].second = arg.value();
-        }
-        auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        int64_t connectId = imageLoaderController->registerImageLoader(args, imgType->second);
-        response->set_connectid(connectId);
+    ImageLoaderFactory::SourceType imgType;
+    auto imgTypeIt = ImageLoaderFactory::sourceTypeMap.find(request->imgtype());
+    if (ImageLoaderFactory::sourceTypeMap.end() == imgTypeIt) {
+        // 匹配不到，用编辑距离智能匹配
+        imgType = ImageLoaderFactory::getMostSimilarSourceType(request->imgtype());
     }
+    else {
+        imgType = imgTypeIt->second;
+    }
+    int argsCnt = request->args_size();
+    std::vector<std::pair<std::string, std::string>> args(argsCnt);
+    for (int i = 0; i < argsCnt; ++i) {
+        auto arg = request->args(i);
+        args[i].first = arg.key();
+        args[i].second = arg.value();
+    }
+    auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+    int64_t connectId = imageLoaderController->registerImageLoader(args, imgType);
+    response->set_connectid(connectId);
     return grpc::Status::OK;
 }
 

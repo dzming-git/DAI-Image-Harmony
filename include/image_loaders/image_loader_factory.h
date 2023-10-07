@@ -27,6 +27,7 @@ public:
         GRPCVideo,
     };
     static std::unordered_map<std::string, ImageLoaderFactory::SourceType> sourceTypeMap;
+    static SourceType getMostSimilarSourceType(std::string);
     static ImageLoaderBase* createImageLoader(ImageLoaderFactory::SourceType);
 };
 
