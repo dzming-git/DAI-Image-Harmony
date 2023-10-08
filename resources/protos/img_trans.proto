@@ -42,6 +42,10 @@ message RegisterImgTransServiceResponse {
 message GetImgRequest {
     // 连接ID
     int64 connectId = 1;
+    // 图像压缩格式
+    string format = 2;
+    // 图像压缩参数
+    repeated int32 params = 3;
 }
 
 message GetImgResponse {

@@ -63,6 +63,12 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();
+    std::string format = request->format();
+    int paramsCnt = request->params_size();
+    std::vector<int> params(paramsCnt);
+    for (int i = 0; i < paramsCnt; ++i) {
+        params[i] = request->params(i);
+    }
     response->set_imgid(-1);
     auto imageLoaderController = ImageLoaderController::getSingletonInstance();
     auto imgLoader = imageLoaderController->getImageLoader(connectId);
@@ -81,7 +87,16 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
         auto now = std::chrono::system_clock::now();
         auto timeStamp = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
         response->set_imgid(timeStamp);
-        response->set_buf(imgBGR.data, 3 * imgBGR.rows * imgBGR.cols);
+        if (format.size()) {
+            std::vector<uchar> buf;
+            // TODO: 在这里压缩图像会有一些性能冗余
+            cv::imencode(format, imgBGR, buf, params);
+            size_t bufSize = buf.size();
+            response->set_buf(&buf[0], buf.size());
+        }
+        else {
+            response->set_buf(imgBGR.data, 3 * imgBGR.rows * imgBGR.cols);
+        }
     }
     response->mutable_response()->set_code(responseCode);
     response->mutable_response()->set_message(responseMessage);
