@@ -46,6 +46,9 @@ message GetImgRequest {
     string format = 2;
     // 图像压缩参数
     repeated int32 params = 3;
+    // 图像的期望大小
+    int32 expectedW = 4;
+    int32 expectedH = 5;
 }
 
 message GetImgResponse {

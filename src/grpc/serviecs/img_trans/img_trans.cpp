@@ -69,18 +69,30 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
     for (int i = 0; i < paramsCnt; ++i) {
         params[i] = request->params(i);
     }
+    int expectedW = request->expectedw();
+    int expectedH = request->expectedh();
     response->set_imgid(-1);
     auto imageLoaderController = ImageLoaderController::getSingletonInstance();
     auto imgLoader = imageLoaderController->getImageLoader(connectId);
     if (nullptr == imgLoader) {
-    responseCode = 400;
-    responseMessage = "The imgLoader is nullptr. Unable to load the image.\n";
+        responseCode = 400;
+        responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
     } else if (!imgLoader->hasNext()) {
-    responseCode = 400;
-    responseMessage = "No more images available.\n";
+        responseCode = 400;
+        responseMessage += "No more images available.\n";
     }
     else {
         auto imgBGR = imgLoader->next();
+        if (expectedW * expectedH && !(expectedW == imgBGR.cols && expectedH == imgBGR.rows)) {
+            double aspectRatio = (double)imgBGR.cols / imgBGR.rows;
+            double expectedAspectRatio = (double)expectedW / expectedH;
+            if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
+                std::string originalAspectRatio = std::to_string(aspectRatio);
+                std::string currentAspectRatio = std::to_string(expectedAspectRatio);
+                responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+            }
+            cv::resize(imgBGR, imgBGR, cv::Size(expectedW, expectedH));
+        }
         response->set_h(imgBGR.rows);
         response->set_w(imgBGR.cols);
         // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
