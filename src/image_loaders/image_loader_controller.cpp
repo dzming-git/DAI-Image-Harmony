@@ -97,7 +97,7 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
     return connectId;
 }
 
-void ImageLoaderController::unregisterImageLoader(int64_t connectId) {
+bool ImageLoaderController::unregisterImageLoader(int64_t connectId) {
     LOG("unregisterImageLoader\n");
     auto imageLoaderIt = loadersMap.find(connectId);
     if (loadersMap.end() != imageLoaderIt) {
@@ -106,7 +106,8 @@ void ImageLoaderController::unregisterImageLoader(int64_t connectId) {
         if (loadersMap[connectId].cnt <= 0) {
             delete loadersMap[connectId].ptr;
             loadersMap.erase(imageLoaderIt);
-            
         }
-    } 
+        return true;
+    }
+    return false;
 }
