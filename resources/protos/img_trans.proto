@@ -11,11 +11,18 @@ service Communicate {
 message NullRequest {}
 message NullResponse {}
 
+// 每次通信的状态
+message CustomResponse {
+  int32 code = 1;
+  string message = 2;
+}
+
 message UnregisterImgTransServiceRequest {
     int64 connectId = 1;
 }
 
 message UnregisterImgTransServiceResponse {
+    CustomResponse response = 1;
 }
 
 message RegisterImgTransServiceRequest {
@@ -28,18 +35,21 @@ message RegisterImgTransServiceRequest {
 }
 
 message RegisterImgTransServiceResponse {
-    int64 connectId = 1;
+    CustomResponse response = 1;
+    int64 connectId = 2;
 }
 
 message GetImgRequest {
+    // 连接ID
     int64 connectId = 1;
 }
 
 message GetImgResponse {
-    int32 w = 1;
-    int32 h = 2;
-    int64 imgId = 3;
-    bytes buf = 4;
+    CustomResponse response = 1;
+    int32 w = 2;
+    int32 h = 3;
+    int64 imgId = 4;
+    bytes buf = 5;
 }
 
 // protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` img_trans.proto

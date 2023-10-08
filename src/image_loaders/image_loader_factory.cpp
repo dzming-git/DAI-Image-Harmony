@@ -36,7 +36,7 @@ std::unordered_map<std::string, ImageLoaderFactory::SourceType> ImageLoaderFacto
         {"local image", ImageLoaderFactory::SourceType::LocalImage}
 };
 
-ImageLoaderFactory::SourceType ImageLoaderFactory::getMostSimilarSourceType(std::string typeString) {
+std::string ImageLoaderFactory::getMostSimilarSourceType(std::string typeString) {
     int minDist = INT_MAX;
     std::string mostSimilarType;
 
@@ -56,7 +56,7 @@ ImageLoaderFactory::SourceType ImageLoaderFactory::getMostSimilarSourceType(std:
 
     std::cout << "Intelligent matching " << typeString << " -> " << mostSimilarType << std::endl;
     // 返回最相似的源类型
-    return sourceTypeMap[mostSimilarType];
+    return mostSimilarType;
 }
 
 ImageLoaderBase *ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType type) {
