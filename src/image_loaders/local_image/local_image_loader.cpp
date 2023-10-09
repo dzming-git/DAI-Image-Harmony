@@ -37,7 +37,7 @@ bool LocalImageLoader::hasNext() {
 
 cv::Mat LocalImageLoader::next() {
     img.release();
-    while (hasNext() && img.empty()) {
+    if (hasNext() && img.empty()) {
         img = cv::imread(this->paths[currIdx++]);
     }
     return img;
