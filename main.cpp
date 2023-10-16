@@ -15,8 +15,45 @@ int main() {
 #include "grpc/grpc_server.h"
 #include "grpc/grpc_server_builder.h"
 #include "grpc/serviecs/img_trans/img_trans.h"
+#include "consul/consul_client.h"
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+std::string getPrivateIpLinux() {
+    int ret = 0;
+    struct ifaddrs * ifAddrStruct = NULL;
+    void * tmpAddrPtr = NULL;
+    ret = getifaddrs(&ifAddrStruct);
+    if (0 != ret) {
+        return "";
+    }
+    std::string ip;
+    int padress_buf_len = INET_ADDRSTRLEN;
+    char addressBuffer[INET6_ADDRSTRLEN] = {0};
+    while (NULL != ifAddrStruct ) {
+        if (AF_INET == ifAddrStruct->ifa_addr->sa_family ) {
+            tmpAddrPtr = &((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
+            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, padress_buf_len);
+            ip = std::string(addressBuffer);
+            if ("127.0.0.1" != ip) return ip;
+            memset(addressBuffer, 0, padress_buf_len);
+        } 
+        ifAddrStruct = ifAddrStruct->ifa_next;
+    }
+    return "";
+}
 
 int main(int argc, char** argv) {
+    ConsulClient consul;
+    std::string host = getPrivateIpLinux();
+    consul.setServiceAddress(host)
+          .setServicePort("5000")
+          .setServiceId("image harmony-" + host + ":5000")
+          .setServiceName("image harmony")
+          .setServiceTags({"image harmony"})
+          .registerService();
     GRPCServer::GRPCServerBuilder builder;
     ImgTransService imgTransService;
     builder.setHost("0.0.0.0")

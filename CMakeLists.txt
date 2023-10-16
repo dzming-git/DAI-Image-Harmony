@@ -88,9 +88,29 @@ target_link_libraries(data_grpc_proto
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
+# libhv
+set(HV_LIBRARY /usr/local/lib/libhv.so)
+
 # include
 include_directories("${GENERATED_OUT_PATH}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+
+set(HEADERS
+    include/http_server/http_server.h
+    include/http_server/http_server_builder.h
+    include/http_server/http_response_handler/http_response_handler_base.h
+    include/http_server/http_response_handler/http_response_handler_factory.h
+    include/http_server/http_response_handler/http_response_handler_test.h
+    include/image_loaders/image_loader_base.h
+    include/image_loaders/image_loader_factory.h
+    include/image_loaders/image_loader_controller.h
+    include/image_loaders/local_image/local_image_loader.h
+    include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
+    include/grpc/grpc_server.h
+    include/grpc/grpc_server_builder.h
+    include/grpc/serviecs/img_trans/img_trans.h
+    include/consul/consul_client.h
+    )
 
 set(SOURCES
     main.cpp
@@ -107,25 +127,14 @@ set(SOURCES
     src/grpc/grpc_server.cpp
     src/grpc/grpc_server_builder.cpp
     src/grpc/serviecs/img_trans/img_trans.cpp
-    )
-
-set(HEADERS
-    include/http_server/http_server.h
-    include/http_server/http_server_builder.h
-    include/http_server/http_response_handler/http_response_handler_base.h
-    include/http_server/http_response_handler/http_response_handler_factory.h
-    include/http_server/http_response_handler/http_response_handler_test.h
-    include/image_loaders/image_loader_base.h
-    include/image_loaders/image_loader_factory.h
-    include/image_loaders/image_loader_controller.h
-    include/image_loaders/local_image/local_image_loader.h
-    include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
-    include/grpc/grpc_server.h
-    include/grpc/grpc_server_builder.h
-    include/grpc/serviecs/img_trans/img_trans.h
+    src/consul/consul_client.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+# local
+set(LOCAL_INCLUDE_DIRS "/usr/local/include")
+target_include_directories(${PROJECT_NAME} PRIVATE ${HV_INCLUDE_DIRS})
 
 # OpenCV
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -142,3 +151,5 @@ target_link_libraries(${PROJECT_NAME}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
+# linhv
+target_link_libraries(${PROJECT_NAME} ${HV_LIBRARY})

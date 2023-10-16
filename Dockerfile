@@ -65,6 +65,19 @@ RUN \
     ldconfig && \
     rm -rf /grpc
 
+# 安装 libhv
+# https://github.com/ithewei/libhv
+
+RUN \
+    cd / && \
+    git clone https://github.com/ithewei/libhv.git  && \
+    cd /libhv && \
+    ./configure && \
+    make && \
+    make install && \
+    ldconfig && \
+    rm -rf /libhv
+
 EXPOSE 5000
 
 COPY . ./workspace

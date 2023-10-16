@@ -21,6 +21,12 @@ DAI/集成层/Image Harmony
 - ✅gRPC
 - REST Api
 
+## 环境参数
+
+```shell
+export CONSUL_ADDRESS=xxx.xxx.xxx.xxx
+```
+
 ## 第三方库安装
 
 ### HCNetSDK
