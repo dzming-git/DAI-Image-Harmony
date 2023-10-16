@@ -97,7 +97,7 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
         response->set_w(imgBGR.cols);
         // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
         auto now = std::chrono::system_clock::now();
-        auto timeStamp = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+        auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         response->set_imgid(timeStamp);
         if (format.size()) {
             std::vector<uchar> buf;
