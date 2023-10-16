@@ -59,6 +59,7 @@ grpc::Status ImgTransService::unregisterImgTransService(grpc::ServerContext *con
     response->mutable_response()->set_message(responseMessage);
     return grpc::Status::OK;
 }
+
 grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
@@ -99,16 +100,16 @@ grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTran
         auto now = std::chrono::system_clock::now();
         auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         response->set_imgid(timeStamp);
-        if (format.size()) {
-            std::vector<uchar> buf;
-            // TODO: 在这里压缩图像会有一些性能冗余
-            cv::imencode(format, imgBGR, buf, params);
-            size_t bufSize = buf.size();
-            response->set_buf(&buf[0], buf.size());
+        // 无参数时，默认使用 .jpg 无损压缩
+        if (0 == format.size()) {
+            format = ".jpg";
+            params = {cv::IMWRITE_PNG_COMPRESSION, 100};
         }
-        else {
-            response->set_buf(imgBGR.data, 3 * imgBGR.rows * imgBGR.cols);
-        }
+        std::vector<uchar> buf;
+        // TODO: 在这里压缩图像会有一些性能冗余
+        cv::imencode(format, imgBGR, buf, params);
+        size_t bufSize = buf.size();
+        response->set_buf(&buf[0], buf.size());
     }
     response->mutable_response()->set_code(responseCode);
     response->mutable_response()->set_message(responseMessage);
