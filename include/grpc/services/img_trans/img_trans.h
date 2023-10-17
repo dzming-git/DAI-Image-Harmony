@@ -10,6 +10,9 @@
 *  Remark  :  proto file: resources/protos/img_trans.proto                   *
 *****************************************************************************/
 
+#ifndef _IMG_TRANS_H_
+#define _IMG_TRANS_H_
+
 #include <string>
 #include "protos/img_trans/img_trans.grpc.pb.h"
 #include "protos/img_trans/img_trans.pb.h"
@@ -27,3 +30,5 @@ public:
     virtual grpc::Status getImg(grpc::ServerContext*, const imgTrans::GetImgRequest*, imgTrans::GetImgResponse*) override;
 private:
 };
+
+#endif /* _IMG_TRANS_H_ */
