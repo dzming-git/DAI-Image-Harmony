@@ -108,7 +108,7 @@ set(HEADERS
     include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
     include/grpc/grpc_server.h
     include/grpc/grpc_server_builder.h
-    include/grpc/serviecs/img_trans/img_trans.h
+    include/grpc/services/img_trans/img_trans.h
     include/consul/consul_client.h
     )
 
@@ -126,7 +126,7 @@ set(SOURCES
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.cpp
     src/grpc/grpc_server.cpp
     src/grpc/grpc_server_builder.cpp
-    src/grpc/serviecs/img_trans/img_trans.cpp
+    src/grpc/services/img_trans/img_trans.cpp
     src/consul/consul_client.cpp
     )
 

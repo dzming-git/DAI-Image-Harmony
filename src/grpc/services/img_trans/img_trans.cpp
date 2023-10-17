@@ -1,4 +1,4 @@
-#include "grpc/serviecs/img_trans/img_trans.h"
+#include "grpc/services/img_trans/img_trans.h"
 #include "image_loaders/image_loader_factory.h"
 #include "image_loaders/image_loader_controller.h"
 #include <chrono>

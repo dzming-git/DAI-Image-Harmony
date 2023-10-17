@@ -14,7 +14,7 @@ int main() {
 
 #include "grpc/grpc_server.h"
 #include "grpc/grpc_server_builder.h"
-#include "grpc/serviecs/img_trans/img_trans.h"
+#include "grpc/services/img_trans/img_trans.h"
 #include "consul/consul_client.h"
 #include <sys/types.h>
 #include <ifaddrs.h>
