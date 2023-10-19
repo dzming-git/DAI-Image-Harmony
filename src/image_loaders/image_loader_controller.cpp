@@ -16,6 +16,18 @@ std::int64_t hashArgs(int type, const std::vector<std::pair<std::string, std::st
     return static_cast<std::size_t>(seed);
 }
 
+// TODO: 未来使用分布式ID生成器实现
+std::int64_t generateInt64Random() {
+    auto time = std::chrono::system_clock::now();
+    auto duration = time.time_since_epoch();
+    auto seed = static_cast<unsigned int>(duration.count());
+    std::mt19937_64 rng(seed);
+    
+    // 生成int64_t范围内的随机数
+    std::uniform_int_distribution<int64_t> dist(std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max());
+    return dist(rng);
+}
+
 ImageLoaderController* ImageLoaderController::instance = nullptr;
 pthread_mutex_t ImageLoaderController::lock;
 
@@ -36,10 +48,10 @@ ImageLoaderController *ImageLoaderController::getSingletonInstance() {
 }
 
 ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectId) {
-    auto imageLoaderIt = loadersMap.find(connectId);
-    if (loadersMap.end() == imageLoaderIt) {
-        return nullptr;
-    }
+    auto loaderArgsHashIt = connectsMap.find(connectId);
+    if (connectsMap.end() == loaderArgsHashIt) return nullptr;
+    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second);
+    if (loadersMap.end() == imageLoaderIt) return nullptr;
     return imageLoaderIt->second.ptr;
 }
 
@@ -54,8 +66,8 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
     static pthread_mutex_t registerImageLoaderLock;
     pthread_mutex_lock(&registerImageLoaderLock);
     // TODO: 未考虑哈希冲突
-    int64_t connectId = hashArgs(static_cast<int>(type), args);
-    auto imageLoaderIt = loadersMap.find(connectId);
+    int64_t loaderArgsHash = hashArgs(static_cast<int>(type), args);
+    auto imageLoaderIt = loadersMap.find(loaderArgsHash);
     bool needCreate = false;
     // 没有这个源的信息，新建
     if (loadersMap.end() == imageLoaderIt) {
@@ -63,8 +75,8 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
         needCreate = true;
     }
     // 有这个源的信息，且不是独占，数量+1
-    else if (false == loadersMap[connectId].ptr->isUnique()) {
-        ++loadersMap[connectId].cnt;
+    else if (false == loadersMap[loaderArgsHash].ptr->isUnique()) {
+        ++loadersMap[loaderArgsHash].cnt;
     }
     // 有这个源的信息，且是独占，新建
     else {
@@ -73,41 +85,48 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
         do {
             auto current = std::chrono::system_clock::now().time_since_epoch();
             auto seed = static_cast<size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(current).count());
-            connectId = hashArgs(static_cast<int>(type), args, seed);
-        } while (loadersMap.find(connectId) != loadersMap.end());
+            loaderArgsHash = hashArgs(static_cast<int>(type), args, seed);
+        } while (loadersMap.find(loaderArgsHash) != loadersMap.end());
         needCreate = true;
     }
     if (needCreate) {
-        loadersMap.emplace(connectId, ImageLoaderController::ImageLoaderPtrAndCount());
-        loadersMap[connectId].ptr = ImageLoaderFactory::createImageLoader(type);
+        loadersMap.emplace(loaderArgsHash, ImageLoaderController::ImageLoaderPtrAndCount());
+        loadersMap[loaderArgsHash].ptr = ImageLoaderFactory::createImageLoader(type);
         for (auto arg: args) {
-            loadersMap[connectId].ptr->setArgument(arg.first, arg.second);
+            loadersMap[loaderArgsHash].ptr->setArgument(arg.first, arg.second);
         }
-        if (loadersMap[connectId].ptr->start()) {
-            loadersMap[connectId].cnt = 1;
+        if (loadersMap[loaderArgsHash].ptr->start()) {
+            loadersMap[loaderArgsHash].cnt = 1;
         }
         else {
-            unregisterImageLoader(connectId);
+            unregisterImageLoader(loaderArgsHash);
             std::cout << "image loader start failed" << std::endl;
             return -1;
         }
     }
-    std::cout << "connect cnt:" << loadersMap[connectId].cnt << std::endl;
+    std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     pthread_mutex_unlock(&registerImageLoaderLock);
+    int64_t connectId = generateInt64Random();
+    // TODO: 未考虑哈希冲突，以后在分布式ID生成器中统一解决
+    connectsMap[connectId] = loaderArgsHash;
     return connectId;
 }
 
 bool ImageLoaderController::unregisterImageLoader(int64_t connectId) {
     LOG("unregisterImageLoader\n");
-    auto imageLoaderIt = loadersMap.find(connectId);
-    if (loadersMap.end() != imageLoaderIt) {
-        --loadersMap[connectId].cnt;
-        std::cout << "connect cnt:" << loadersMap[connectId].cnt << std::endl;
-        if (loadersMap[connectId].cnt <= 0) {
-            delete loadersMap[connectId].ptr;
-            loadersMap.erase(imageLoaderIt);
-        }
-        return true;
+    auto loaderArgsHashIt = connectsMap.find(connectId);
+    if (connectsMap.end() == loaderArgsHashIt) return false;
+
+    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second);
+    if (loadersMap.end() == imageLoaderIt) return false;
+
+    int64_t loaderArgsHash = loaderArgsHashIt->second;
+    --loadersMap[loaderArgsHash].cnt;
+    std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
+    if (loadersMap[loaderArgsHash].cnt <= 0) {
+        delete loadersMap[loaderArgsHash].ptr;
+        loadersMap.erase(imageLoaderIt);
     }
-    return false;
+    connectsMap.erase(loaderArgsHashIt);
+    return true;
 }
