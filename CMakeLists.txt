@@ -57,36 +57,39 @@ endif()
 
 # proto文件生成代码文件
 
-## 设置生成文件路径
-set(data_proto ${PROJECT_SOURCE_DIR}/resources/protos/img_trans.proto)
-set(data_proto_srcs "${GENERATED_OUT_PATH}/protos/img_trans/img_trans.pb.cc")
-set(data_proto_hdrs "${GENERATED_OUT_PATH}/protos/img_trans/img_trans.pb.h")
-set(data_grpc_srcs "${GENERATED_OUT_PATH}/protos/img_trans/img_trans.grpc.pb.cc")
-set(data_grpc_hdrs "${GENERATED_OUT_PATH}/protos/img_trans/img_trans.grpc.pb.h")
+set(protos img_trans task_coordinate)
+foreach(proto ${protos})
+    message("current generating: ${proto}")
+    set(data_proto ${PROJECT_SOURCE_DIR}/resources/protos/${proto}.proto)
+    set(data_proto_srcs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.pb.cc")
+    set(data_proto_hdrs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.pb.h")
+    set(data_grpc_srcs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.grpc.pb.cc")
+    set(data_grpc_hdrs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.grpc.pb.h")
 
-## 生成文件
-add_custom_command(
-      OUTPUT "${data_proto_srcs}" "${data_proto_hdrs}" "${data_grpc_srcs}" "${data_grpc_hdrs}"
-      COMMAND protoc
-      ARGS --grpc_out "${GENERATED_OUT_PATH}/protos/img_trans"
-        --cpp_out "${GENERATED_OUT_PATH}/protos/img_trans"
-        -I "${PROJECT_SOURCE_DIR}/resources/protos"
-        --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`
-        "${data_proto}"
-      DEPENDS "${data_proto}")
+    ## 生成文件
+    add_custom_command(
+        OUTPUT "${data_proto_srcs}" "${data_proto_hdrs}" "${data_grpc_srcs}" "${data_grpc_hdrs}"
+        COMMAND protoc
+        ARGS --grpc_out "${GENERATED_OUT_PATH}/protos/${proto}"
+            --cpp_out "${GENERATED_OUT_PATH}/protos/${proto}"
+            -I "${PROJECT_SOURCE_DIR}/resources/protos"
+            --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`
+            "${data_proto}"
+        DEPENDS "${data_proto}")
 
-#将grpc的四个文件编译成一个库
-# data_grpc_proto
-add_library(data_grpc_proto
-  ${data_grpc_srcs}
-  ${data_grpc_hdrs}
-  ${data_proto_srcs}
-  ${data_proto_hdrs})
-#链接库data_grpc_proto，会生成链接文件
-target_link_libraries(data_grpc_proto
-  ${_REFLECTION}
-  ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+    #将grpc的四个文件编译成一个库
+    # data_grpc_proto
+    add_library(${proto}_data_grpc_proto
+      ${data_grpc_srcs}
+      ${data_grpc_hdrs}
+      ${data_proto_srcs}
+      ${data_proto_hdrs})
+    #链接库data_grpc_proto，会生成链接文件
+    target_link_libraries(${proto}_data_grpc_proto
+      ${_REFLECTION}
+      ${_GRPC_GRPCPP}
+      ${_PROTOBUF_LIBPROTOBUF})
+endforeach()
 
 # libhv
 set(HV_LIBRARY /usr/local/lib/libhv.so)
@@ -109,6 +112,7 @@ set(HEADERS
     include/grpc/grpc_server.h
     include/grpc/grpc_server_builder.h
     include/grpc/services/img_trans/img_trans.h
+    include/grpc/services/task_coordinate/task_coordinate.h
     include/consul/consul_client.h
     )
 
@@ -127,6 +131,7 @@ set(SOURCES
     src/grpc/grpc_server.cpp
     src/grpc/grpc_server_builder.cpp
     src/grpc/services/img_trans/img_trans.cpp
+    src/grpc/services/task_coordinate/task_coordinate.cpp
     src/consul/consul_client.cpp
     )
 
@@ -146,10 +151,12 @@ target_link_libraries(${PROJECT_NAME} ${HCNetSDK_LIBS})
 
 # proto
 target_link_libraries(${PROJECT_NAME}
-  data_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
+foreach(proto ${protos})
+    target_link_libraries(${PROJECT_NAME} ${proto}_data_grpc_proto)
+endforeach()
 
 # linhv
 target_link_libraries(${PROJECT_NAME} ${HV_LIBRARY})

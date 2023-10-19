@@ -15,6 +15,7 @@ int main() {
 #include "grpc/grpc_server.h"
 #include "grpc/grpc_server_builder.h"
 #include "grpc/services/img_trans/img_trans.h"
+#include "grpc/services/task_coordinate/task_coordinate.h"
 #include "consul/consul_client.h"
 #include <sys/types.h>
 #include <ifaddrs.h>
@@ -56,10 +57,12 @@ int main(int argc, char** argv) {
           .registerService();
     GRPCServer::GRPCServerBuilder builder;
     ImgTransService imgTransService;
+    TaskCoordinateService taskCoordinateService;
     builder.setHost("0.0.0.0")
            .setEpollCount(4, 8)
            .setMaxSendBytes(1024 * 1024 * 1024)
-           .addService(&imgTransService);
+           .addService(&imgTransService)
+           .addService(&taskCoordinateService);
     auto server = builder.build();
     server->start();
     return 0;
