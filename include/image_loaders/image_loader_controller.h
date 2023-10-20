@@ -14,28 +14,42 @@
 #ifndef _IMAGE_LOADER_CONTRILLER_H_
 #define _IMAGE_LOADER_CONTRILLER_H_
 
-#include <atomic>
 #include <mutex>
 #include <unordered_map>
+#include <chrono>
+#include <thread>
 #include "image_loaders/image_loader_base.h"
 #include "image_loaders/image_loader_factory.h"
 
 class ImageLoaderController {
 public:
-    struct ImageLoaderPtrAndCount {
-        ImageLoaderBase* ptr;
-        int cnt;
+    struct ImageLoaderInfo {
+        ImageLoaderBase* ptr = nullptr;
+        int cnt = 0;
+    };
+    struct ConnectionInfo {
+        int64_t loaderArgsHash = -1;
+        std::chrono::steady_clock::time_point lastRequestTime;
+        void updateTime();
     };
     static ImageLoaderController* getSingletonInstance();
-    ImageLoaderBase* getImageLoader(int64_t);
+    ImageLoaderBase* getImageLoader(int64_t connectionId);
     int64_t registerImageLoader(std::vector<std::pair<std::string, std::string>>, ImageLoaderFactory::SourceType);
     bool unregisterImageLoader(int64_t);
+    void setConnectionTimeout(int timeout);
 private:
     ImageLoaderController();
+    void checkConnections();
+    void startCheckConnections();
+    int connectionTimeout;
+    std::thread checkConnectionsThread;
+
     static ImageLoaderController* instance;
     static pthread_mutex_t lock;
+    
 
-    std::unordered_map<int64_t, ImageLoaderPtrAndCount> loadersMap;
+    std::unordered_map<int64_t /* loaderArgsHash */, ImageLoaderInfo> loadersMap;
+    std::unordered_map<int64_t /* connectionId */, ConnectionInfo> connectionsMap;
 };
 
 #endif /* _IMAGE_LOADER_CONTRILLER_H_ */

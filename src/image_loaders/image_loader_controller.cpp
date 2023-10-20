@@ -31,9 +31,42 @@ std::int64_t generateInt64Random() {
 ImageLoaderController* ImageLoaderController::instance = nullptr;
 pthread_mutex_t ImageLoaderController::lock;
 
-ImageLoaderController::ImageLoaderController() {
-    
+void ImageLoaderController::ConnectionInfo::updateTime() {
+    lastRequestTime = std::chrono::steady_clock::now();
 }
+
+ImageLoaderController::ImageLoaderController(): connectionTimeout(10) {
+}
+
+void ImageLoaderController::checkConnections() {
+    while (1) {
+        std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+        std::vector<int64_t> eraseConnectionIds;
+        for (auto& entry : connectionsMap) {
+            int64_t connectionId = entry.first;
+            ConnectionInfo& info = entry.second;
+
+            std::chrono::duration<double> elapsedTime = currentTime - info.lastRequestTime;
+            if (elapsedTime.count() >= connectionTimeout) {
+                LOG("connection %lld timeout\n", connectionId);
+                unregisterImageLoader(connectionId);
+                eraseConnectionIds.emplace_back(connectionId);
+            }
+        }
+        for (auto& eraseConnectionId : eraseConnectionIds) {
+            auto connectionIt = connectionsMap.find(eraseConnectionId);
+            if (connectionsMap.end() != connectionIt) {
+                connectionsMap.erase(connectionIt);
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(connectionTimeout / 2));
+    }
+}
+
+void ImageLoaderController::startCheckConnections() {
+    checkConnectionsThread = std::thread(&ImageLoaderController::checkConnections, this);
+    checkConnectionsThread.detach();
+} 
 
 // 懒汉单例模式
 ImageLoaderController *ImageLoaderController::getSingletonInstance() {
@@ -41,16 +74,18 @@ ImageLoaderController *ImageLoaderController::getSingletonInstance() {
 		pthread_mutex_lock(&lock);
 		if (nullptr == instance) {
 			instance = new ImageLoaderController();
+            instance->startCheckConnections();
 		}
         pthread_mutex_unlock(&lock);
 	}
 	return instance;
 }
 
-ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectId) {
-    auto loaderArgsHashIt = connectsMap.find(connectId);
-    if (connectsMap.end() == loaderArgsHashIt) return nullptr;
-    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second);
+ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectionId) {
+    auto loaderArgsHashIt = connectionsMap.find(connectionId);
+    if (connectionsMap.end() == loaderArgsHashIt) return nullptr;
+    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second.loaderArgsHash);
+    loaderArgsHashIt->second.updateTime();
     if (loadersMap.end() == imageLoaderIt) return nullptr;
     return imageLoaderIt->second.ptr;
 }
@@ -90,7 +125,7 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
         needCreate = true;
     }
     if (needCreate) {
-        loadersMap.emplace(loaderArgsHash, ImageLoaderController::ImageLoaderPtrAndCount());
+        loadersMap.emplace(loaderArgsHash, ImageLoaderController::ImageLoaderInfo());
         loadersMap[loaderArgsHash].ptr = ImageLoaderFactory::createImageLoader(type);
         for (auto arg: args) {
             loadersMap[loaderArgsHash].ptr->setArgument(arg.first, arg.second);
@@ -106,27 +141,33 @@ int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::st
     }
     std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     pthread_mutex_unlock(&registerImageLoaderLock);
-    int64_t connectId = generateInt64Random();
+    int64_t connectionId = generateInt64Random();
     // TODO: 未考虑哈希冲突，以后在分布式ID生成器中统一解决
-    connectsMap[connectId] = loaderArgsHash;
-    return connectId;
+    connectionsMap.emplace(connectionId, ImageLoaderController::ConnectionInfo());
+    connectionsMap[connectionId].loaderArgsHash = loaderArgsHash;
+    connectionsMap[connectionId].updateTime();
+    return connectionId;
 }
 
-bool ImageLoaderController::unregisterImageLoader(int64_t connectId) {
+bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
     LOG("unregisterImageLoader\n");
-    auto loaderArgsHashIt = connectsMap.find(connectId);
-    if (connectsMap.end() == loaderArgsHashIt) return false;
+    auto loaderArgsHashIt = connectionsMap.find(connectionId);
+    if (connectionsMap.end() == loaderArgsHashIt) return false;
 
-    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second);
+    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second.loaderArgsHash);
+    loaderArgsHashIt->second.updateTime();
     if (loadersMap.end() == imageLoaderIt) return false;
 
-    int64_t loaderArgsHash = loaderArgsHashIt->second;
+    int64_t loaderArgsHash = loaderArgsHashIt->second.loaderArgsHash;
     --loadersMap[loaderArgsHash].cnt;
     std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     if (loadersMap[loaderArgsHash].cnt <= 0) {
         delete loadersMap[loaderArgsHash].ptr;
         loadersMap.erase(imageLoaderIt);
     }
-    connectsMap.erase(loaderArgsHashIt);
+    connectionsMap.erase(loaderArgsHashIt);
     return true;
+}
+void ImageLoaderController::setConnectionTimeout(int timeout) {
+    connectionTimeout = timeout;
 }
