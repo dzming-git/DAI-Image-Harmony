@@ -21,9 +21,10 @@ message InformPreviousServiceInfoRequest {
         string value = 2;
     }
     int64 taskId = 1;
-    string preServiceIp = 2;
-    string preServicePort = 3;
-    repeated Argument args = 4;
+    string preServiceName = 2;
+    string preServiceIp = 3;
+    string preServicePort = 4;
+    repeated Argument args = 5;
 }
 
 message InformPreviousServiceInfoResponse {
