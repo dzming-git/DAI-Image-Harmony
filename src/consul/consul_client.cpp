@@ -71,6 +71,11 @@ bool ConsulClient::registerService() {
     serviceInfoJson["Name"] = serviceName;
     serviceInfoJson["Address"] = serviceAddress;
     serviceInfoJson["Port"] = atoi(servicePort.data());
+    nlohmann::json tags = nlohmann::json::array();
+    for (auto& tag : serviceTags) {
+        tags.push_back(tag);
+    }
+    serviceInfoJson["Tags"] = tags;
     nlohmann::json serviceCheckInfoJson;
     ServiceCheck check;
     if (nullptr == serviceCheck) {

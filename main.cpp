@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
           .setServicePort("5000")
           .setServiceId("image harmony-" + host + ":5000")
           .setServiceName("image harmony")
-          .setServiceTags({"image harmony"})
+          .setServiceTags({"image harmony", "grpc"})
           .registerService();
     GRPCServer::GRPCServerBuilder builder;
     ImgTransService imgTransService;
