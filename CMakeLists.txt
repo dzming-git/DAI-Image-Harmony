@@ -114,6 +114,7 @@ set(HEADERS
     include/grpc/services/img_trans/img_trans.h
     include/grpc/services/task_coordinate/task_coordinate.h
     include/consul/consul_client.h
+    include/consul/server_info.h
     )
 
 set(SOURCES
@@ -133,6 +134,7 @@ set(SOURCES
     src/grpc/services/img_trans/img_trans.cpp
     src/grpc/services/task_coordinate/task_coordinate.cpp
     src/consul/consul_client.cpp
+    src/consul/server_info.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

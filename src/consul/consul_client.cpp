@@ -3,15 +3,7 @@
 #include "hv/json.hpp"
 #include <string>
 
-ConsulClient::ServiceCheck::ServiceCheck() {
-    protocol = "TCP";
-    url = "";
-    status = "passing";
-    intervalMs = 10000;
-    timeoutMs = 3000;
-}
-
-ConsulClient::ConsulClient(): consulPort("8500"), serviceCheck(nullptr) {
+ConsulClient::ConsulClient(): consulPort("8500") {
     // 从环境变量中读取consul地址
     char* consulAddressPtr = std::getenv("CONSUL_ADDRESS");
     if (nullptr == consulAddressPtr) {
@@ -32,60 +24,34 @@ ConsulClient& ConsulClient::setConsulPort(std::string port) {
     return *this;
 }
 
-ConsulClient& ConsulClient::setServiceId(std::string id) {
-    serviceId = id;
-    return *this;
-}
-
-ConsulClient& ConsulClient::setServiceName(std::string name) {
-    serviceName = name;
-    return *this;
-}
-
-ConsulClient& ConsulClient::setServiceAddress(std::string address) {
-    serviceAddress = address;
-    return *this;
-}
-
-ConsulClient& ConsulClient::setServicePort(std::string port) {
-    servicePort = port;
-    return *this;
-}
-
-ConsulClient& ConsulClient::setServiceTags(std::vector<std::string> tags) {
-    serviceTags = tags;
-    return *this;
-}
-
-ConsulClient& ConsulClient::setServiceCheck(ServiceCheck* check) {
-    serviceCheck = check;
-    return *this;
-}
-
-bool ConsulClient::registerService() {
+bool ConsulClient::registerService(const ServerInfo& serverInfo) {
     HttpRequest req;
     req.method = HTTP_PUT;
     req.url = "http://" + consulAddress + ":" + consulPort + "/v1/agent/service/register";
     req.content_type = APPLICATION_JSON;
     nlohmann::json serviceInfoJson;
-    serviceInfoJson["Id"] = serviceId;
-    serviceInfoJson["Name"] = serviceName;
-    serviceInfoJson["Address"] = serviceAddress;
-    serviceInfoJson["Port"] = atoi(servicePort.data());
-    nlohmann::json tags = nlohmann::json::array();
-    for (auto& tag : serviceTags) {
-        tags.push_back(tag);
+    serviceInfoJson["Name"] = serverInfo.getServiceName();
+    serviceInfoJson["Address"] = serverInfo.getServiceAddress();
+    serviceInfoJson["Port"] = atoi(serverInfo.getServicePort().data());    
+    nlohmann::json tagsJson = nlohmann::json::array();
+    for (auto& tag : serverInfo.getServiceTags()) {
+        tagsJson.push_back(tag);
     }
-    serviceInfoJson["Tags"] = tags;
+    serviceInfoJson["Tags"] = tagsJson;
     nlohmann::json serviceCheckInfoJson;
-    ServiceCheck check;
-    if (nullptr == serviceCheck) {
-        check.url = serviceAddress + ":" + servicePort;
-        serviceCheck = &check;
+    ServerInfo::ServiceCheck* check = serverInfo.getServiceCheck();
+    bool needDeleteCheckPtr = false;
+    if (nullptr == check) {
+        needDeleteCheckPtr = true;
+        check = new ServerInfo::ServiceCheck();
+        check->url = serverInfo.getServiceAddress() + ":" + serverInfo.getServicePort();
     }
-    serviceCheckInfoJson[serviceCheck->protocol] = serviceCheck->url;
-    serviceCheckInfoJson["Interval"] = std::to_string(serviceCheck->intervalMs) + "ms";
-    serviceCheckInfoJson["DeregisterCriticalServiceAfter"] = std::to_string(serviceCheck->intervalMs * 3) + "ms";
+    serviceCheckInfoJson[check->protocol] = check->url;
+    serviceCheckInfoJson["Interval"] = std::to_string(check->intervalMs) + "ms";
+    serviceCheckInfoJson["DeregisterCriticalServiceAfter"] = std::to_string(check->intervalMs * 3) + "ms";
+    if (needDeleteCheckPtr) {
+        delete check;
+    }
     serviceInfoJson["Check"] = serviceCheckInfoJson;
     req.body = serviceInfoJson.dump();
     std::cout << "PUT " << req.url << std::endl
