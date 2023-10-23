@@ -1,0 +1,3 @@
+[submodule "src/consul"]
+	path = src/consul
+	url = https://github.com/dzming-git/DAI-consul-cpp.git
