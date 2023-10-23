@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/usr/local/include/opencv4",
                 "/usr/local/include",
-                "${workspaceFolder}/include",
+                "${workspaceFolder}/src",
                 "${workspaceFolder}/generated"
             ],
             "defines": [],

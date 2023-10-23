@@ -96,25 +96,25 @@ set(HV_LIBRARY /usr/local/lib/libhv.so)
 
 # include
 include_directories("${GENERATED_OUT_PATH}")
-include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/src")
 
 set(HEADERS
-    include/http_server/http_server.h
-    include/http_server/http_server_builder.h
-    include/http_server/http_response_handler/http_response_handler_base.h
-    include/http_server/http_response_handler/http_response_handler_factory.h
-    include/http_server/http_response_handler/http_response_handler_test.h
-    include/image_loaders/image_loader_base.h
-    include/image_loaders/image_loader_factory.h
-    include/image_loaders/image_loader_controller.h
-    include/image_loaders/local_image/local_image_loader.h
-    include/image_loaders/webcamera_hikvision/webcamera_hikvision.h
-    include/grpc/grpc_server.h
-    include/grpc/grpc_server_builder.h
-    include/grpc/services/img_trans/img_trans.h
-    include/grpc/services/task_coordinate/task_coordinate.h
-    include/consul/consul_client.h
-    include/consul/server_info.h
+    src/http_server/http_server.h
+    src/http_server/http_server_builder.h
+    src/http_server/http_response_handler/http_response_handler_base.h
+    src/http_server/http_response_handler/http_response_handler_factory.h
+    src/http_server/http_response_handler/http_response_handler_test.h
+    src/image_loaders/image_loader_base.h
+    src/image_loaders/image_loader_factory.h
+    src/image_loaders/image_loader_controller.h
+    src/image_loaders/local_image/local_image_loader.h
+    src/image_loaders/webcamera_hikvision/webcamera_hikvision.h
+    src/grpc/grpc_server.h
+    src/grpc/grpc_server_builder.h
+    src/grpc/services/img_trans/img_trans.h
+    src/grpc/services/task_coordinate/task_coordinate.h
+    src/consul/consul_client.h
+    src/consul/server_info.h
     )
 
 set(SOURCES
