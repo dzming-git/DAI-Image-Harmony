@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     ServerInfo serverInfo;
     std::string host = getPrivateIpLinux();
     serverInfo
-        .setServiceAddress(host)
+        .setServiceIp(host)
         .setServicePort("5000")
         .setServiceId("image harmony-" + host + ":5000")
         .setServiceName("image harmony")
