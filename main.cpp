@@ -17,7 +17,7 @@ int main() {
 #include "grpc/servers/img_trans/img_trans_server.h"
 #include "grpc/servers/task_coordinate/task_coordinate_server.h"
 #include "consul/consul_client.h"
-#include "consul/server_info.h"
+#include "consul/service_info.h"
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -49,15 +49,15 @@ std::string getPrivateIpLinux() {
 
 int main(int argc, char** argv) {
     ConsulClient consul;
-    ServerInfo serverInfo;
+    ServiceInfo serviceInfo;
     std::string host = getPrivateIpLinux();
-    serverInfo
+    serviceInfo
         .setServiceIp(host)
         .setServicePort("5000")
         .setServiceId("image harmony-" + host + ":5000")
         .setServiceName("image harmony")
         .setServiceTags({"image harmony", "grpc"});
-    consul.registerService(serverInfo);
+    consul.registerService(serviceInfo);
     GRPCServer::GRPCServerBuilder builder;
     ImgTransServer imgTransService;
     TaskCoordinateServer taskCoordinateService;
