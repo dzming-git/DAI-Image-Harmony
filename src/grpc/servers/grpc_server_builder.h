@@ -15,7 +15,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include <vector>
-#include "grpc/grpc_server.h"
+#include "grpc/servers/grpc_server.h"
 
 class GRPCServer::GRPCServerBuilder {
 public:

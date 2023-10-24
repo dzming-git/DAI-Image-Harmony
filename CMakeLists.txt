@@ -109,10 +109,10 @@ set(HEADERS
     src/image_loaders/image_loader_controller.h
     src/image_loaders/local_image/local_image_loader.h
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.h
-    src/grpc/grpc_server.h
-    src/grpc/grpc_server_builder.h
-    src/grpc/services/img_trans/img_trans.h
-    src/grpc/services/task_coordinate/task_coordinate.h
+    src/grpc/servers/grpc_server.h
+    src/grpc/servers/grpc_server_builder.h
+    src/grpc/servers/img_trans/img_trans_server.h
+    src/grpc/servers/task_coordinate/task_coordinate_server.h
     src/consul/consul_client.h
     src/consul/server_info.h
     )
@@ -129,10 +129,10 @@ set(SOURCES
     src/image_loaders/image_loader_controller.cpp
     src/image_loaders/local_image/local_image_loader.cpp
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.cpp
-    src/grpc/grpc_server.cpp
-    src/grpc/grpc_server_builder.cpp
-    src/grpc/services/img_trans/img_trans.cpp
-    src/grpc/services/task_coordinate/task_coordinate.cpp
+    src/grpc/servers/grpc_server.cpp
+    src/grpc/servers/grpc_server_builder.cpp
+    src/grpc/servers/img_trans/img_trans_server.cpp
+    src/grpc/servers/task_coordinate/task_coordinate_server.cpp
     src/consul/consul_client.cpp
     src/consul/server_info.cpp
     )

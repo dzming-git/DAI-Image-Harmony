@@ -1,5 +1,5 @@
-#include "grpc/grpc_server.h"
-#include "grpc/grpc_server_builder.h"
+#include "grpc/servers/grpc_server.h"
+#include "grpc/servers/grpc_server_builder.h"
 
 GRPCServer::GRPCServerBuilder::GRPCServerBuilder(): host("127.0.0.1"), port("5000") {
     serverBuilder = new grpc::ServerBuilder();

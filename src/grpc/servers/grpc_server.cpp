@@ -1,5 +1,5 @@
-#include "grpc/grpc_server.h"
-#include "grpc/grpc_server_builder.h"
+#include "grpc/servers/grpc_server.h"
+#include "grpc/servers/grpc_server_builder.h"
 
 GRPCServer::GRPCServer(GRPCServerBuilder* myBuilder, grpc::ServerBuilder* officialBuilder) {
     server = officialBuilder->BuildAndStart();

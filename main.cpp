@@ -12,10 +12,10 @@ int main() {
 
 #else
 
-#include "grpc/grpc_server.h"
-#include "grpc/grpc_server_builder.h"
-#include "grpc/services/img_trans/img_trans.h"
-#include "grpc/services/task_coordinate/task_coordinate.h"
+#include "grpc/servers/grpc_server.h"
+#include "grpc/servers/grpc_server_builder.h"
+#include "grpc/servers/img_trans/img_trans_server.h"
+#include "grpc/servers/task_coordinate/task_coordinate_server.h"
 #include "consul/consul_client.h"
 #include "consul/server_info.h"
 #include <sys/types.h>
@@ -59,8 +59,8 @@ int main(int argc, char** argv) {
         .setServiceTags({"image harmony", "grpc"});
     consul.registerService(serverInfo);
     GRPCServer::GRPCServerBuilder builder;
-    ImgTransService imgTransService;
-    TaskCoordinateService taskCoordinateService;
+    ImgTransServer imgTransService;
+    TaskCoordinateServer taskCoordinateService;
     builder.setHost("0.0.0.0")
            .setEpollCount(4, 8)
            .setMaxSendBytes(1024 * 1024 * 1024)

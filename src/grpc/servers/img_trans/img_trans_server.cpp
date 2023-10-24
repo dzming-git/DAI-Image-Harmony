@@ -1,17 +1,17 @@
-#include "grpc/services/img_trans/img_trans.h"
+#include "grpc/servers/img_trans/img_trans_server.h"
 #include "image_loaders/image_loader_factory.h"
 #include "image_loaders/image_loader_controller.h"
 #include <chrono>
 #include <random>
 #include <vector>
 
-ImgTransService::ImgTransService() {
+ImgTransServer::ImgTransServer() {
 }
 
-ImgTransService::~ImgTransService() {
+ImgTransServer::~ImgTransServer() {
 }
 
-grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
+grpc::Status ImgTransServer::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     response->set_connectid(-1);
@@ -46,7 +46,7 @@ grpc::Status ImgTransService::registerImgTransService(grpc::ServerContext*, cons
     return grpc::Status::OK;
 }
 
-grpc::Status ImgTransService::unregisterImgTransService(grpc::ServerContext *context, const imgTrans::UnregisterImgTransServiceRequest *request, imgTrans::UnregisterImgTransServiceResponse *response) {
+grpc::Status ImgTransServer::unregisterImgTransService(grpc::ServerContext *context, const imgTrans::UnregisterImgTransServiceRequest *request, imgTrans::UnregisterImgTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();
@@ -60,7 +60,7 @@ grpc::Status ImgTransService::unregisterImgTransService(grpc::ServerContext *con
     return grpc::Status::OK;
 }
 
-grpc::Status ImgTransService::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response) {
+grpc::Status ImgTransServer::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();
