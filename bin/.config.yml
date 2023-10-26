@@ -2,7 +2,7 @@ service:
   name: image harmony
   port: 5000
   tags: 
-    - interface:grpc
+    - interface:gRPC
     - support:hikvision
     - support:local image
 
