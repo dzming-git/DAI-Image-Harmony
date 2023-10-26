@@ -45,6 +45,7 @@ RUN \
     rm -rf /OpenCV
 
 # 安装gRPC
+# https://github.com/grpc/grpc
 
 ENV GRPC_VERSION='1.58.1'
 
@@ -68,15 +69,37 @@ RUN \
 # 安装 libhv
 # https://github.com/ithewei/libhv
 
+ENV LIBHV_VERSION='1.3.2'
+
 RUN \
     cd / && \
-    git clone https://github.com/ithewei/libhv.git  && \
+    git clone https://github.com/ithewei/libhv  && \
     cd /libhv && \
+    git checkout v${LIBHV_VERSION} && \
     ./configure && \
     make && \
     make install && \
     ldconfig && \
     rm -rf /libhv
+
+
+# 安装yaml-cpp
+# https://github.com/jbeder/yaml-cpp
+
+ENV YAML_CPP_VERSION='0.7.0'
+
+RUN \
+    cd / && \
+    git clone https://github.com/jbeder/yaml-cpp  && \
+    cd /yaml-cpp && \
+    git checkout yaml-cpp-${YAML_CPP_VERSION} && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install && \
+    ldconfig && \
+    rm -rf /yaml-cpp
 
 EXPOSE 5000
 

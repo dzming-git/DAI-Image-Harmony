@@ -18,6 +18,7 @@ int main() {
 #include "grpc/servers/task_coordinate/task_coordinate_server.h"
 #include "consul/consul_client.h"
 #include "consul/service_info.h"
+#include "config/config.h"
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -48,15 +49,22 @@ std::string getPrivateIpLinux() {
 }
 
 int main(int argc, char** argv) {
+    auto config = Config::getSingletonInstance();
+
     ConsulClient consul;
+    consul
+        .setConsulIp(config->getConsulIp())
+        .setConsulPort(config->getConsulPort());
     ServiceInfo serviceInfo;
     std::string host = getPrivateIpLinux();
+    std::string serviceName = config->getServiceName();
+    std::string servicePort = config->getServicePort();
     serviceInfo
         .setServiceIp(host)
-        .setServicePort("5000")
-        .setServiceId("image harmony-" + host + ":5000")
-        .setServiceName("image harmony")
-        .setServiceTags({"image harmony", "grpc"});
+        .setServicePort(servicePort)
+        .setServiceId(serviceName + "-" + host + ":" + servicePort)
+        .setServiceName(serviceName)
+        .setServiceTags(config->getServiceTags());
     consul.registerService(serviceInfo);
     GRPCServer::GRPCServerBuilder builder;
     ImgTransServer imgTransService;

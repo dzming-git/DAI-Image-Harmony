@@ -15,9 +15,12 @@ set(GENERATED_OUT_PATH ${PROJECT_SOURCE_DIR}/generated)
 
 # 查找OpenCV
 find_package(OpenCV REQUIRED)
+
+# 查找grpc相关
 find_package(Protobuf CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
+
 # 设置HCNetSDK包含文件
 set(HCNetSDK_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/HCNetSDK/include)
 
@@ -94,6 +97,9 @@ endforeach()
 # libhv
 set(HV_LIBRARY /usr/local/lib/libhv.so)
 
+# yaml-cpp
+set(YAMLCPP_LIBRARY /usr/local/lib/libyaml-cpp.a)
+
 # include
 include_directories("${GENERATED_OUT_PATH}")
 include_directories("${PROJECT_SOURCE_DIR}/src")
@@ -115,6 +121,7 @@ set(HEADERS
     src/grpc/servers/task_coordinate/task_coordinate_server.h
     src/consul/consul_client.h
     src/consul/service_info.h
+    src/config/config.h
     )
 
 set(SOURCES
@@ -135,6 +142,7 @@ set(SOURCES
     src/grpc/servers/task_coordinate/task_coordinate_server.cpp
     src/consul/consul_client.cpp
     src/consul/service_info.cpp
+    src/config/config.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
@@ -162,3 +170,6 @@ endforeach()
 
 # linhv
 target_link_libraries(${PROJECT_NAME} ${HV_LIBRARY})
+
+# yaml-cpp
+target_link_libraries(${PROJECT_NAME} ${YAMLCPP_LIBRARY})
