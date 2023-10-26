@@ -1,0 +1,11 @@
+service:
+  name: image harmony
+  port: 5000
+  tags: 
+    - interface:grpc
+    - support:hikvision
+    - support:local image
+
+consul:
+  ip: 172.18.0.7
+  port: 8500

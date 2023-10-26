@@ -1,5 +1,5 @@
-/bin/
+/bin/*
+!/bin/.config.yml
 /build/
 /thirdparty/
 /generated/
-source.txt
