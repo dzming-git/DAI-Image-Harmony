@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 # 可执行程序的输出目录
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/bin
+)
 
 # 生成文件的输出目录
 set(GENERATED_OUT_PATH ${PROJECT_SOURCE_DIR}/generated)
@@ -63,6 +66,10 @@ endif()
 set(protos image_harmony service_coordinator)
 foreach(proto ${protos})
     message("current generating: ${proto}")
+    
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_OUT_PATH}/protos/${proto}
+    )
     set(data_proto ${PROJECT_SOURCE_DIR}/resources/protos/${proto}.proto)
     set(data_proto_srcs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.pb.cc")
     set(data_proto_hdrs "${GENERATED_OUT_PATH}/protos/${proto}/${proto}.pb.h")
@@ -173,3 +180,4 @@ target_link_libraries(${PROJECT_NAME} ${HV_LIBRARY})
 
 # yaml-cpp
 target_link_libraries(${PROJECT_NAME} ${YAMLCPP_LIBRARY})
+
