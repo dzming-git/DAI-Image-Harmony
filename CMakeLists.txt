@@ -60,7 +60,7 @@ endif()
 
 # proto文件生成代码文件
 
-set(protos image_harmony service_coordinate)
+set(protos image_harmony service_coordinator)
 foreach(proto ${protos})
     message("current generating: ${proto}")
     set(data_proto ${PROJECT_SOURCE_DIR}/resources/protos/${proto}.proto)
@@ -118,7 +118,7 @@ set(HEADERS
     src/grpc/servers/grpc_server.h
     src/grpc/servers/grpc_server_builder.h
     src/grpc/servers/image_harmony/image_harmony_server.h
-    src/grpc/servers/service_coordinate/service_coordinate_server.h
+    src/grpc/servers/service_coordinator/service_coordinator_server.h
     src/consul/consul_client.h
     src/consul/service_info.h
     src/config/config.h
@@ -139,7 +139,7 @@ set(SOURCES
     src/grpc/servers/grpc_server.cpp
     src/grpc/servers/grpc_server_builder.cpp
     src/grpc/servers/image_harmony/image_harmony_server.cpp
-    src/grpc/servers/service_coordinate/service_coordinate_server.cpp
+    src/grpc/servers/service_coordinator/service_coordinator_server.cpp
     src/consul/consul_client.cpp
     src/consul/service_info.cpp
     src/config/config.cpp
