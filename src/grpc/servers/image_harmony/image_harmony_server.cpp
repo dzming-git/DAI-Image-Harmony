@@ -1,17 +1,17 @@
-#include "grpc/servers/img_trans/img_trans_server.h"
+#include "grpc/servers/image_harmony/image_harmony_server.h"
 #include "image_loaders/image_loader_factory.h"
 #include "image_loaders/image_loader_controller.h"
 #include <chrono>
 #include <random>
 #include <vector>
 
-ImgTransServer::ImgTransServer() {
+ImageHarmonyServer::ImageHarmonyServer() {
 }
 
-ImgTransServer::~ImgTransServer() {
+ImageHarmonyServer::~ImageHarmonyServer() {
 }
 
-grpc::Status ImgTransServer::registerImgTransService(grpc::ServerContext*, const imgTrans::RegisterImgTransServiceRequest *request, imgTrans::RegisterImgTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::registerImgTransService(grpc::ServerContext*, const imageHarmony::RegisterImgTransServiceRequest *request, imageHarmony::RegisterImgTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     response->set_connectid(-1);
@@ -46,7 +46,7 @@ grpc::Status ImgTransServer::registerImgTransService(grpc::ServerContext*, const
     return grpc::Status::OK;
 }
 
-grpc::Status ImgTransServer::unregisterImgTransService(grpc::ServerContext *context, const imgTrans::UnregisterImgTransServiceRequest *request, imgTrans::UnregisterImgTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::unregisterImgTransService(grpc::ServerContext *context, const imageHarmony::UnregisterImgTransServiceRequest *request, imageHarmony::UnregisterImgTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();
@@ -60,7 +60,7 @@ grpc::Status ImgTransServer::unregisterImgTransService(grpc::ServerContext *cont
     return grpc::Status::OK;
 }
 
-grpc::Status ImgTransServer::getImg(grpc::ServerContext *context, const imgTrans::GetImgRequest *request, imgTrans::GetImgResponse *response) {
+grpc::Status ImageHarmonyServer::getImg(grpc::ServerContext *context, const imageHarmony::GetImgRequest *request, imageHarmony::GetImgResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();

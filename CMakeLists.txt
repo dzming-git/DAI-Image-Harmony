@@ -60,7 +60,7 @@ endif()
 
 # proto文件生成代码文件
 
-set(protos img_trans task_coordinate)
+set(protos image_harmony service_coordinate)
 foreach(proto ${protos})
     message("current generating: ${proto}")
     set(data_proto ${PROJECT_SOURCE_DIR}/resources/protos/${proto}.proto)
@@ -117,8 +117,8 @@ set(HEADERS
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.h
     src/grpc/servers/grpc_server.h
     src/grpc/servers/grpc_server_builder.h
-    src/grpc/servers/img_trans/img_trans_server.h
-    src/grpc/servers/task_coordinate/task_coordinate_server.h
+    src/grpc/servers/image_harmony/image_harmony_server.h
+    src/grpc/servers/service_coordinate/service_coordinate_server.h
     src/consul/consul_client.h
     src/consul/service_info.h
     src/config/config.h
@@ -138,8 +138,8 @@ set(SOURCES
     src/image_loaders/webcamera_hikvision/webcamera_hikvision.cpp
     src/grpc/servers/grpc_server.cpp
     src/grpc/servers/grpc_server_builder.cpp
-    src/grpc/servers/img_trans/img_trans_server.cpp
-    src/grpc/servers/task_coordinate/task_coordinate_server.cpp
+    src/grpc/servers/image_harmony/image_harmony_server.cpp
+    src/grpc/servers/service_coordinate/service_coordinate_server.cpp
     src/consul/consul_client.cpp
     src/consul/service_info.cpp
     src/config/config.cpp

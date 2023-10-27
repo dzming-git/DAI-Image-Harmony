@@ -14,8 +14,8 @@ int main() {
 
 #include "grpc/servers/grpc_server.h"
 #include "grpc/servers/grpc_server_builder.h"
-#include "grpc/servers/img_trans/img_trans_server.h"
-#include "grpc/servers/task_coordinate/task_coordinate_server.h"
+#include "grpc/servers/image_harmony/image_harmony_server.h"
+#include "grpc/servers/service_coordinate/service_coordinate_server.h"
 #include "consul/consul_client.h"
 #include "consul/service_info.h"
 #include "config/config.h"
@@ -67,12 +67,12 @@ int main(int argc, char** argv) {
         .setServiceTags(config->getServiceTags());
     consul.registerService(serviceInfo);
     GRPCServer::GRPCServerBuilder builder;
-    ImgTransServer imgTransService;
-    TaskCoordinateServer taskCoordinateService;
+    ImageHarmonyServer imageHarmonyService;
+    ServiceCoordinateServer taskCoordinateService;
     builder.setHost("0.0.0.0")
            .setEpollCount(4, 8)
            .setMaxSendBytes(1024 * 1024 * 1024)
-           .addService(&imgTransService)
+           .addService(&imageHarmonyService)
            .addService(&taskCoordinateService);
     auto server = builder.build();
     server->start();
