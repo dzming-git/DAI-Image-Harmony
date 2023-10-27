@@ -1,3 +1,6 @@
 [submodule "src/consul"]
 	path = src/consul
 	url = https://github.com/dzming-git/DAI-consul-cpp.git
+[submodule "resources/protos"]
+	path = resources/protos
+	url = https://github.com/dzming-git/DAI-grpc-protos.git
