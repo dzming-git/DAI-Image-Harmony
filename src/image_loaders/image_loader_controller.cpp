@@ -2,10 +2,11 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <unordered_map>
 
 #define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
-std::int64_t hashArgs(int type, const std::vector<std::pair<std::string, std::string>>& args, std::size_t seed = 0) {
+std::int64_t hashArgs(int type, const std::unordered_map<std::string, std::string>& args, std::size_t seed = 0) {
     auto hashString = [&seed](const std::string& str) {
         seed ^= std::hash<std::string>()(str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     };
@@ -90,7 +91,7 @@ ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectionId) {
     return imageLoaderIt->second.ptr;
 }
 
-int64_t ImageLoaderController::registerImageLoader(std::vector<std::pair<std::string, std::string>> args, ImageLoaderFactory::SourceType type) {
+int64_t ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type) {
     LOG("registerImageLoader\n");
     std::cout << "type: " << static_cast<int>(type) << std::endl;
     std::cout << "args: " << std::endl;

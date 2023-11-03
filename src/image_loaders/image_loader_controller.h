@@ -34,7 +34,7 @@ public:
     };
     static ImageLoaderController* getSingletonInstance();
     ImageLoaderBase* getImageLoader(int64_t connectionId);
-    int64_t registerImageLoader(std::vector<std::pair<std::string, std::string>>, ImageLoaderFactory::SourceType);
+    int64_t registerImageLoader(std::unordered_map<std::string, std::string>, ImageLoaderFactory::SourceType);
     bool unregisterImageLoader(int64_t);
     void setConnectionTimeout(int timeout);
 private:

@@ -27,12 +27,11 @@ grpc::Status ImageHarmonyServer::registerImgTransService(grpc::ServerContext*, c
         imgType = imgTypeIt->second;
         responseMessage = "Match.\n";
     }
+    std::unordered_map<std::string, std::string> args;
     int argsCnt = request->args_size();
-    std::vector<std::pair<std::string, std::string>> args(argsCnt);
     for (int i = 0; i < argsCnt; ++i) {
         auto arg = request->args(i);
-        args[i].first = arg.key();
-        args[i].second = arg.value();
+        args.emplace(arg.key(), arg.value());
     }
     auto imageLoaderController = ImageLoaderController::getSingletonInstance();
     int64_t connectId = imageLoaderController->registerImageLoader(args, imgType);
