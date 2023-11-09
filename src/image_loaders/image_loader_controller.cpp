@@ -49,16 +49,12 @@ void ImageLoaderController::checkConnections() {
 
             std::chrono::duration<double> elapsedTime = currentTime - info.lastRequestTime;
             if (elapsedTime.count() >= connectionTimeout) {
-                LOG("connection %lld timeout\n", connectionId);
-                unregisterImageLoader(connectionId);
                 eraseConnectionIds.emplace_back(connectionId);
             }
         }
         for (auto& eraseConnectionId : eraseConnectionIds) {
-            auto connectionIt = connectionsMap.find(eraseConnectionId);
-            if (connectionsMap.end() != connectionIt) {
-                connectionsMap.erase(connectionIt);
-            }
+            LOG("connection %lld timeout\n", eraseConnectionId);
+            unregisterImageLoader(eraseConnectionId);
         }
         std::this_thread::sleep_for(std::chrono::seconds(connectionTimeout / 2));
     }
