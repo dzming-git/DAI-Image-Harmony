@@ -31,6 +31,9 @@ public:
     std::string getConsulIp() const;
     std::string getConsulPort() const;
 
+    // settings
+    int getHistoryMaxSize() const;
+
 private:
     Config();
 
@@ -40,6 +43,8 @@ private:
 
     std::string consulIp;
     std::string consulPort;
+
+    int historyMaxSize;
 
     static Config* instance;
     static pthread_mutex_t lock;

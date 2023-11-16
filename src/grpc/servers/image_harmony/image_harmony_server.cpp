@@ -4,8 +4,11 @@
 #include <chrono>
 #include <random>
 #include <vector>
+#include "config/config.h"
 
 ImageHarmonyServer::ImageHarmonyServer() {
+    auto config = Config::getSingletonInstance();
+    historyMaxSize = config->getHistoryMaxSize();
 }
 
 ImageHarmonyServer::~ImageHarmonyServer() {
@@ -63,6 +66,7 @@ grpc::Status ImageHarmonyServer::getImg(grpc::ServerContext *context, const imag
     int32_t responseCode = 200;
     std::string responseMessage;
     int64_t connectId = request->connectid();
+    int64_t imgId = request->imgid();
     std::string format = request->format();
     int paramsCnt = request->params_size();
     std::vector<int> params(paramsCnt);
@@ -71,18 +75,54 @@ grpc::Status ImageHarmonyServer::getImg(grpc::ServerContext *context, const imag
     }
     int expectedW = request->expectedw();
     int expectedH = request->expectedh();
-    response->set_imgid(-1);
-    auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-    auto imgLoader = imageLoaderController->getImageLoader(connectId);
-    if (nullptr == imgLoader) {
-        responseCode = 400;
-        responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
-    } else if (!imgLoader->hasNext()) {
-        responseCode = 400;
-        responseMessage += "No more images available.\n";
+    response->set_imgid(-1);        
+    // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
+    auto now = std::chrono::system_clock::now();
+    auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+    cv::Mat imgBGR;
+    // 获取最新图像
+    if (0 == imgId) {
+        auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+        auto imgLoader = imageLoaderController->getImageLoader(connectId);
+        if (nullptr == imgLoader) {
+            responseCode = 400;
+            responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
+        } else if (!imgLoader->hasNext()) {
+            responseCode = 400;
+            responseMessage += "No more images available.\n";
+        }
+        
+        else {
+            response->set_imgid(timeStamp);
+            pthread_mutex_lock(&historyLock);
+            if (historyOrder.size() >= historyMaxSize) {
+                int64_t removeImgId = historyOrder.front();
+                history.erase(removeImgId);
+                historyOrder.pop();
+            }
+            historyOrder.emplace(timeStamp);
+            history[timeStamp] = imgLoader->next();
+            // 深拷贝，避免后续的resize影响原始图像
+            imgBGR = history[timeStamp].clone();
+            pthread_mutex_unlock(&historyLock);
+        }
     }
+    // 调取历史图像
     else {
-        auto imgBGR = imgLoader->next();
+        pthread_mutex_lock(&historyLock);
+        auto it = history.find(imgId);
+        if (it == history.end()) {
+            responseCode = 400;
+            responseMessage += "img ID not found.\n";
+        }
+        else {
+            imgBGR = it->second;
+        }
+        pthread_mutex_unlock(&historyLock);
+    }
+
+    if (!imgBGR.empty()) {
         if (expectedW * expectedH && !(expectedW == imgBGR.cols && expectedH == imgBGR.rows)) {
             double aspectRatio = (double)imgBGR.cols / imgBGR.rows;
             double expectedAspectRatio = (double)expectedW / expectedH;
@@ -95,10 +135,6 @@ grpc::Status ImageHarmonyServer::getImg(grpc::ServerContext *context, const imag
         }
         response->set_h(imgBGR.rows);
         response->set_w(imgBGR.cols);
-        // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
-        auto now = std::chrono::system_clock::now();
-        auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-        response->set_imgid(timeStamp);
         // 无参数时，默认使用 .jpg 无损压缩
         if (0 == format.size()) {
             format = ".jpg";

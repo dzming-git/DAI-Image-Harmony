@@ -9,3 +9,6 @@ service:
 consul:
   ip: 172.18.0.7
   port: 8500
+
+settings:
+  historyMaxSize: 100

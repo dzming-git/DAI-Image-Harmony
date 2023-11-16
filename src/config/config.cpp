@@ -63,7 +63,7 @@ Config::Config() {
     }
     if (nodeConsulDefined && nodeConsul["ip"].IsDefined()) {
         consulIp = nodeConsul["ip"].as<std::string>();
-        std::cout << "consul ip: " << nodeConsul["ip"].as<std::string>() << std::endl;
+        std::cout << "consul ip: " << consulIp << std::endl;
     }
     else {
         LOG("Node [consul][ip] not found\n");
@@ -74,6 +74,21 @@ Config::Config() {
     }
     else {
         LOG("Node [consul][port] not found\n");
+    }
+
+    // settings node:
+    auto settingsConsul = root["settings"];
+    bool nodeSettingsDefined = true;
+    if (!settingsConsul.IsDefined()) {
+        nodeSettingsDefined = false;
+    }
+    if (nodeSettingsDefined && settingsConsul["historyMaxSize"].IsDefined()) {
+        historyMaxSize = settingsConsul["historyMaxSize"].as<int>();
+        std::cout << "historyMaxSize: " << historyMaxSize << std::endl;
+    }
+    else {
+        historyMaxSize = 100;
+        std::cout << "historyMaxSize (default): " << historyMaxSize << std::endl;
     }
     std::cout << std::endl;
 }
@@ -107,4 +122,8 @@ std::string Config::getConsulIp() const {
 
 std::string Config::getConsulPort() const {
     return consulPort;
+}
+
+int Config::getHistoryMaxSize() const {
+    return historyMaxSize;
 }
