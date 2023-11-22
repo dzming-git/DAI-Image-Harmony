@@ -149,21 +149,20 @@ int64_t ImageLoaderController::registerImageLoader(std::unordered_map<std::strin
 
 bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
     LOG("unregisterImageLoader\n");
-    auto loaderArgsHashIt = connectionsMap.find(connectionId);
-    if (connectionsMap.end() == loaderArgsHashIt) return false;
+    auto connectionInfoIt = connectionsMap.find(connectionId);
+    if (connectionsMap.end() == connectionInfoIt) return false;
 
-    auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second.loaderArgsHash);
-    loaderArgsHashIt->second.updateTime();
+    auto imageLoaderIt = loadersMap.find(connectionInfoIt->second.loaderArgsHash);
     if (loadersMap.end() == imageLoaderIt) return false;
 
-    int64_t loaderArgsHash = loaderArgsHashIt->second.loaderArgsHash;
+    int64_t loaderArgsHash = connectionInfoIt->second.loaderArgsHash;
     --loadersMap[loaderArgsHash].cnt;
     std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     if (loadersMap[loaderArgsHash].cnt <= 0) {
         delete loadersMap[loaderArgsHash].ptr;
         loadersMap.erase(imageLoaderIt);
     }
-    connectionsMap.erase(loaderArgsHashIt);
+    connectionsMap.erase(connectionInfoIt);
     return true;
 }
 void ImageLoaderController::setConnectionTimeout(int timeout) {
