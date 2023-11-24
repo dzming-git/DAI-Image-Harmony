@@ -50,6 +50,7 @@ public:
     int h;
     int w;
     int bufLen;
+    bool updated;
     char* bufShallowcopy;
     char* bufDeepcopy;
 };

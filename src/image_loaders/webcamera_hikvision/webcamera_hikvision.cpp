@@ -8,13 +8,17 @@
 #define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
 void CALLBACK DecCBFun(int, char* pBuf, int, FRAME_INFO* pFrameInfo, void* videoBufInfo, int) {
-    if (nullptr == ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy && T_YV12 == pFrameInfo->nType) {
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->h = pFrameInfo->nHeight;
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->w = pFrameInfo->nWidth;
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen = (pFrameInfo->nHeight + pFrameInfo->nHeight / 2) * pFrameInfo->nWidth;
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy = pBuf;
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufDeepcopy = new char[((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen];
+    if (T_YV12 == pFrameInfo->nType) {
+        if (nullptr == ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy) {
+            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->h = pFrameInfo->nHeight;
+            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->w = pFrameInfo->nWidth;
+            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen = (pFrameInfo->nHeight + pFrameInfo->nHeight / 2) * pFrameInfo->nWidth;
+            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy = pBuf;
+            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufDeepcopy = new char[((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen];
+        }
+        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->updated = true;
     }
+
 }
 
 void CALLBACK fRealDataCallBack_V30(LONG, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* p_nPort) {
@@ -130,10 +134,11 @@ bool WebcameraHikvisionLoader::isUnique() {
 }
 
 bool WebcameraHikvisionLoader::hasNext() {
-    return playOk;
+    return playOk && videoBufInfo->updated;
 }
 
 cv::Mat WebcameraHikvisionLoader::next() {
+    videoBufInfo->updated = false;
     if (nullptr == videoBufInfo->bufShallowcopy) {
         return cv::Mat();
     }
@@ -154,7 +159,7 @@ size_t WebcameraHikvisionLoader::getCurrentIndex() {
 }
 
 WebcameraHikvisionLoader::VideoBufInfo::VideoBufInfo():
-h(0), w(0), bufLen(0), bufShallowcopy(nullptr), bufDeepcopy(nullptr) {
+h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), bufDeepcopy(nullptr) {
 }
 
 WebcameraHikvisionLoader::VideoBufInfo::~VideoBufInfo() {
