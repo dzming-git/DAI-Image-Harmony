@@ -49,8 +49,8 @@ std::string HttpResponseHandlerTset::response(const std::string &) {
     if (!imgLoader->hasNext()) {
         return "HTTP/1.1 404 Not Found\nContent-Type: text/html\n\n404 Not Found";
     }
-
-    std::string encodedImage = matToBase64(imgLoader->next());
+    auto imageInfo = imgLoader->next();
+    std::string encodedImage = matToBase64(imageInfo.image);
 
     std::string html = "<!DOCTYPE html>\n"
                        "<html>\n"

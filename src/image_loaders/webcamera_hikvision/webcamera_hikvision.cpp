@@ -4,21 +4,42 @@
 #include <unistd.h>
 #include <chrono>
 #include <iostream>
+#include "config/config.h"
 
 #define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
 void CALLBACK DecCBFun(int, char* pBuf, int, FRAME_INFO* pFrameInfo, void* videoBufInfo, int) {
+    // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
+    auto now = std::chrono::system_clock::now();
+    auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    WebcameraHikvisionLoader::VideoBufInfo* info = (WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo;
     if (T_YV12 == pFrameInfo->nType) {
         if (nullptr == ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy) {
-            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->h = pFrameInfo->nHeight;
-            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->w = pFrameInfo->nWidth;
-            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen = (pFrameInfo->nHeight + pFrameInfo->nHeight / 2) * pFrameInfo->nWidth;
-            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy = pBuf;
-            ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufDeepcopy = new char[((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufLen];
+            info->h = pFrameInfo->nHeight;
+            info->w = pFrameInfo->nWidth;
+            info->bufLen = (pFrameInfo->nHeight + pFrameInfo->nHeight / 2) * pFrameInfo->nWidth;
+            info->bufShallowcopy = pBuf;
+            info->historyFrameMemoryPool = new char[info->bufLen * info->historyMaxSize];
         }
-        ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->updated = true;
-    }
+        info->updated = true;
+        // TODO  未考虑使用过程中清晰度改变
+        int soloFrameMemoryLen = 3 * info->h * info->w;
 
+        // 循环存储
+        ++info->historyFrameMemoryPoolUpdateIndex;
+        info->historyFrameMemoryPoolUpdateIndex %= info->historyMaxSize;
+        
+        char* historyFrameMemoryPoolOffset = info->historyFrameMemoryPool + info->historyFrameMemoryPoolUpdateIndex * info->bufLen;
+        memcpy(historyFrameMemoryPoolOffset, pBuf, info->bufLen);
+        pthread_mutex_lock(&info->historyLock);
+        if (info->historyOrder.size() >= info->historyMaxSize) {
+            info->history.erase(info->historyOrder.front());
+            info->historyOrder.pop();
+        }
+        info->historyOrder.emplace(timeStamp);
+        info->history[timeStamp] = historyFrameMemoryPoolOffset;
+        pthread_mutex_unlock(&info->historyLock);
+    }
 }
 
 void CALLBACK fRealDataCallBack_V30(LONG, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* p_nPort) {
@@ -40,6 +61,7 @@ totalCnt(0), currIdx(0), userId(-1), playOk(false) {
     initOk &= NET_DVR_SetReconnect(10000, true);
     videoBufInfo = new WebcameraHikvisionLoader::VideoBufInfo;
     videoBufInfo->bufShallowcopy = nullptr;
+    
 
     args.emplace("DeviceAddress", "");
     args.emplace("UserName", "admin");
@@ -137,17 +159,25 @@ bool WebcameraHikvisionLoader::hasNext() {
     return playOk && videoBufInfo->updated;
 }
 
-cv::Mat WebcameraHikvisionLoader::next() {
+ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
     videoBufInfo->updated = false;
+    ImageInfo imageInfo;
     if (nullptr == videoBufInfo->bufShallowcopy) {
-        return cv::Mat();
+        return imageInfo;
     }
-    // memcpy(videoBufInfo->bufDeepcopy, videoBufInfo->bufShallowcopy, videoBufInfo->bufLen);
-    // cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, videoBufInfo->bufDeepcopy);
-    cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, videoBufInfo->bufShallowcopy);
-    cv::Mat imgBGR;
-    cv::cvtColor(imgYUV420, imgBGR, cv::COLOR_YUV2BGR_YV12);
-    return imgBGR;
+    imageInfo.imageId = videoBufInfo->historyOrder.back();
+    char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageInfo.imageId];
+    cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
+    cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    return imageInfo;
+}
+
+ImageInfo WebcameraHikvisionLoader::getImgById(int64_t imageId) {
+    ImageInfo imageInfo;
+    char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
+    cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
+    cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    return imageInfo;
 }
 
 size_t WebcameraHikvisionLoader::getTotalCount() {
@@ -159,11 +189,13 @@ size_t WebcameraHikvisionLoader::getCurrentIndex() {
 }
 
 WebcameraHikvisionLoader::VideoBufInfo::VideoBufInfo():
-h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), bufDeepcopy(nullptr) {
+h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
+    auto config = Config::getSingletonInstance();
+    historyMaxSize = config->getHistoryMaxSize();
 }
 
 WebcameraHikvisionLoader::VideoBufInfo::~VideoBufInfo() {
-    if (nullptr != bufDeepcopy) {
-        delete[] bufDeepcopy;
+    if (historyFrameMemoryPool) {
+        delete historyFrameMemoryPool;
     }
 }

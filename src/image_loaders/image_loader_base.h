@@ -17,13 +17,19 @@
 #include <string>
 #include <vector>
 
+struct ImageInfo {
+    int64_t imageId;
+    cv::Mat image;
+};
+
 class ImageLoaderBase {
 public:
     virtual bool setArgument(std::string, std::string) = 0;
     virtual bool start() = 0;
     virtual bool isUnique() = 0;
     virtual bool hasNext() = 0;
-    virtual cv::Mat next() = 0;
+    virtual ImageInfo next(int64_t previousImageId = 0) = 0;
+    virtual ImageInfo getImgById(int64_t imageId) = 0;
     virtual size_t getTotalCount() = 0;
     virtual size_t getCurrentIndex() = 0;
     virtual ~ImageLoaderBase();

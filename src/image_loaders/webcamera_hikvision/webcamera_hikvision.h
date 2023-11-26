@@ -25,7 +25,8 @@ public:
     virtual bool start() override;
     virtual bool isUnique() override;
     virtual bool hasNext() override;
-    virtual cv::Mat next() override;
+    virtual ImageInfo next(int64_t previousImageId = 0) override;
+    virtual ImageInfo getImgById(int64_t imageId) override;
     virtual size_t getTotalCount() override;
     virtual size_t getCurrentIndex() override;
     class VideoBufInfo;
@@ -52,7 +53,12 @@ public:
     int bufLen;
     bool updated;
     char* bufShallowcopy;
-    char* bufDeepcopy;
+    int historyMaxSize;  // 内存池最多缓存多少图片
+    char* historyFrameMemoryPool;  // 内存池
+    int historyFrameMemoryPoolUpdateIndex;  // 当前需要写入的位置
+    std::unordered_map<int64_t, char*> history;  // 通过时间戳查询图片指针的哈希表
+    std::queue<int64_t> historyOrder;  // 按照顺序记录时间戳，目的是缓存满时删除最早图片
+    pthread_mutex_t historyLock;
 };
 
 #endif /* _WEBCAMERA_HIKVISION_H_ */

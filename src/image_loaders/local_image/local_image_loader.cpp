@@ -35,12 +35,23 @@ bool LocalImageLoader::hasNext() {
     return currIdx < totalCnt;
 }
 
-cv::Mat LocalImageLoader::next() {
+ImageInfo LocalImageLoader::next(int64_t previousImageId) {
+    ImageInfo imageInfo;
+    // TODO 暂时没有开发previousImageId相关的功能
     img.release();
     if (hasNext() && img.empty()) {
         img = cv::imread(this->paths[currIdx++]);
+        imageInfo.image = img;
+        // TODO 临时代码
+        imageInfo.imageId = rand();
     }
-    return img;
+    return imageInfo;
+}
+
+ImageInfo LocalImageLoader::getImgById(int64_t imageId) {
+    // TODO 未开发
+    ImageInfo imageInfo;
+    return imageInfo;
 }
 
 size_t LocalImageLoader::getTotalCount() {

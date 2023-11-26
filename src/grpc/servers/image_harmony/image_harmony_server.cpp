@@ -4,11 +4,8 @@
 #include <chrono>
 #include <random>
 #include <vector>
-#include "config/config.h"
 
 ImageHarmonyServer::ImageHarmonyServer() {
-    auto config = Config::getSingletonInstance();
-    historyMaxSize = config->getHistoryMaxSize();
 }
 
 ImageHarmonyServer::~ImageHarmonyServer() {
@@ -62,89 +59,125 @@ grpc::Status ImageHarmonyServer::unregisterImgTransService(grpc::ServerContext *
     return grpc::Status::OK;
 }
 
-grpc::Status ImageHarmonyServer::getImg(grpc::ServerContext *context, const imageHarmony::GetImgRequest *request, imageHarmony::GetImgResponse *response) {
+grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context, const imageHarmony::GetImageByImageIdRequest *request, imageHarmony::GetImageByImageIdResponse *response) {
+    int32_t responseCode = 200;
+    std::string responseMessage;      
+    try {
+        int64_t connectId = request->connectid();
+        int64_t imageId = request->imageid();
+        std::string format = request->format();
+        int paramsCnt = request->params_size();
+        std::vector<int> params(paramsCnt);
+        for (int i = 0; i < paramsCnt; ++i) {
+            params[i] = request->params(i);
+        }
+        int expectedW = request->expectedw();
+        int expectedH = request->expectedh();
+        response->set_imageid(0);
+        auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+        auto imgLoader = imageLoaderController->getImageLoader(connectId);
+        if (nullptr == imgLoader) {
+            throw  std::runtime_error("The imgLoader is nullptr. Unable to load the image.\n");
+        }
+        
+        auto imageInfo = imgLoader->getImgById(imageId);
+        if (0 == imageInfo.imageId || imageInfo.image.empty()) {
+            throw  std::runtime_error("Image is NULL.\n");
+        }
+        if (0 != imageInfo.imageId) {
+            response->set_imageid(imageInfo.imageId);
+            if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
+                double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
+                double expectedAspectRatio = (double)expectedW / expectedH;
+                if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
+                    std::string originalAspectRatio = std::to_string(aspectRatio);
+                    std::string currentAspectRatio = std::to_string(expectedAspectRatio);
+                    responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+                }
+                cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
+            }
+            response->set_h(imageInfo.image.rows);
+            response->set_w(imageInfo.image.cols);
+            // 无参数时，默认使用 .jpg 无损压缩
+            if (0 == format.size()) {
+                format = ".jpg";
+                params = {cv::IMWRITE_PNG_COMPRESSION, 100};
+            }
+            std::vector<uchar> buf;
+            // TODO: 在这里压缩图像会有一些性能冗余
+            cv::imencode(format, imageInfo.image, buf, params);
+            size_t bufSize = buf.size();
+            response->set_buf(&buf[0], buf.size());
+        }
+    } catch (const std::exception& e) {
+        responseCode = 400;
+        responseMessage += e.what();
+    }
+    response->mutable_response()->set_code(responseCode);
+    response->mutable_response()->set_message(responseMessage);
+    return grpc::Status::OK;
+}
+
+grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *context, const imageHarmony::GetNextImageByImageIdRequest *request, imageHarmony::GetNextImageByImageIdResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
-    int64_t connectId = request->connectid();
-    int64_t imgId = request->imgid();
-    std::string format = request->format();
-    int paramsCnt = request->params_size();
-    std::vector<int> params(paramsCnt);
-    for (int i = 0; i < paramsCnt; ++i) {
-        params[i] = request->params(i);
-    }
-    int expectedW = request->expectedw();
-    int expectedH = request->expectedh();
-    response->set_imgid(-1);        
-    // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
-    auto now = std::chrono::system_clock::now();
-    auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    try {
+        int64_t connectId = request->connectid();
+        int64_t imageId = request->imageid();
+        std::string format = request->format();
+        int paramsCnt = request->params_size();
+        std::vector<int> params(paramsCnt);
+        for (int i = 0; i < paramsCnt; ++i) {
+            params[i] = request->params(i);
+        }
+        int expectedW = request->expectedw();
+        int expectedH = request->expectedh();
+        response->set_imageid(0);        
 
-    cv::Mat imgBGR;
-    // 获取最新图像
-    if (0 == imgId) {
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         auto imgLoader = imageLoaderController->getImageLoader(connectId);
         if (nullptr == imgLoader) {
             responseCode = 400;
             responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
-        } else if (!imgLoader->hasNext()) {
+        }
+        
+        if (0 == imageId && !imgLoader->hasNext()) {
             responseCode = 400;
             responseMessage += "No more images available.\n";
         }
         
         else {
-            response->set_imgid(timeStamp);
-            pthread_mutex_lock(&historyLock);
-            if (historyOrder.size() >= historyMaxSize) {
-                int64_t removeImgId = historyOrder.front();
-                history.erase(removeImgId);
-                historyOrder.pop();
+            auto imageInfo = imgLoader->next(imageId);
+            if (0 == imageInfo.imageId || imageInfo.image.empty()) {
+                throw  std::runtime_error("Image is NULL.\n");
             }
-            historyOrder.emplace(timeStamp);
-            history[timeStamp] = imgLoader->next();
-            // 深拷贝，避免后续的resize影响原始图像
-            imgBGR = history[timeStamp].clone();
-            pthread_mutex_unlock(&historyLock);
-        }
-    }
-    // 调取历史图像
-    else {
-        pthread_mutex_lock(&historyLock);
-        auto it = history.find(imgId);
-        if (it == history.end()) {
-            responseCode = 400;
-            responseMessage += "img ID not found.\n";
-        }
-        else {
-            imgBGR = it->second;
-        }
-        pthread_mutex_unlock(&historyLock);
-    }
-
-    if (!imgBGR.empty()) {
-        if (expectedW * expectedH && !(expectedW == imgBGR.cols && expectedH == imgBGR.rows)) {
-            double aspectRatio = (double)imgBGR.cols / imgBGR.rows;
-            double expectedAspectRatio = (double)expectedW / expectedH;
-            if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
-                std::string originalAspectRatio = std::to_string(aspectRatio);
-                std::string currentAspectRatio = std::to_string(expectedAspectRatio);
-                responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+            response->set_imageid(imageInfo.imageId);
+            if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
+                double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
+                double expectedAspectRatio = (double)expectedW / expectedH;
+                if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
+                    std::string originalAspectRatio = std::to_string(aspectRatio);
+                    std::string currentAspectRatio = std::to_string(expectedAspectRatio);
+                    responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+                }
+                cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
             }
-            cv::resize(imgBGR, imgBGR, cv::Size(expectedW, expectedH));
+            response->set_h(imageInfo.image.rows);
+            response->set_w(imageInfo.image.cols);
+            // 无参数时，默认使用 .jpg 无损压缩
+            if (0 == format.size()) {
+                format = ".jpg";
+                params = {cv::IMWRITE_PNG_COMPRESSION, 100};
+            }
+            std::vector<uchar> buf;
+            // TODO: 在这里压缩图像会有一些性能冗余
+            cv::imencode(format, imageInfo.image, buf, params);
+            size_t bufSize = buf.size();
+            response->set_buf(&buf[0], buf.size());
         }
-        response->set_h(imgBGR.rows);
-        response->set_w(imgBGR.cols);
-        // 无参数时，默认使用 .jpg 无损压缩
-        if (0 == format.size()) {
-            format = ".jpg";
-            params = {cv::IMWRITE_PNG_COMPRESSION, 100};
-        }
-        std::vector<uchar> buf;
-        // TODO: 在这里压缩图像会有一些性能冗余
-        cv::imencode(format, imgBGR, buf, params);
-        size_t bufSize = buf.size();
-        response->set_buf(&buf[0], buf.size());
+    } catch (const std::exception& e) {
+        responseCode = 400;
+        responseMessage += e.what();
     }
     response->mutable_response()->set_code(responseCode);
     response->mutable_response()->set_message(responseMessage);

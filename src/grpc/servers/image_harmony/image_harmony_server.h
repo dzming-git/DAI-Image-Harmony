@@ -27,12 +27,9 @@ public:
 
     virtual grpc::Status registerImgTransService(grpc::ServerContext*, const imageHarmony::RegisterImgTransServiceRequest*, imageHarmony::RegisterImgTransServiceResponse*) override;
     virtual grpc::Status unregisterImgTransService(grpc::ServerContext*, const imageHarmony::UnregisterImgTransServiceRequest*, imageHarmony::UnregisterImgTransServiceResponse*) override;
-    virtual grpc::Status getImg(grpc::ServerContext*, const imageHarmony::GetImgRequest*, imageHarmony::GetImgResponse*) override;
+    virtual grpc::Status getImageByImageId(grpc::ServerContext*, const imageHarmony::GetImageByImageIdRequest*, imageHarmony::GetImageByImageIdResponse*) override;
+    virtual grpc::Status getNextImageByImageId(grpc::ServerContext*, const imageHarmony::GetNextImageByImageIdRequest*, imageHarmony::GetNextImageByImageIdResponse*) override;
 private:
-    std::unordered_map<int64_t, cv::Mat> history;
-    std::queue<int64_t> historyOrder;
-    int historyMaxSize;
-    pthread_mutex_t historyLock;
 };
 
 #endif /* _IMAGE_HARMONY_SERVER_H_ */
