@@ -21,7 +21,7 @@ void CALLBACK DecCBFun(int, char* pBuf, int, FRAME_INFO* pFrameInfo, void* video
             info->bufShallowcopy = pBuf;
             info->historyFrameMemoryPool = new char[info->bufLen * info->historyMaxSize];
         }
-        info->updated = true;
+        // info->updated = true;
         // TODO  未考虑使用过程中清晰度改变
         int soloFrameMemoryLen = 3 * info->h * info->w;
 
@@ -156,11 +156,12 @@ bool WebcameraHikvisionLoader::isUnique() {
 }
 
 bool WebcameraHikvisionLoader::hasNext() {
-    return playOk && videoBufInfo->updated;
+    return playOk;
+    // return playOk && videoBufInfo->updated;
 }
 
 ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
-    videoBufInfo->updated = false;
+    // videoBufInfo->updated = false;
     ImageInfo imageInfo;
     if (nullptr == videoBufInfo->bufShallowcopy) {
         return imageInfo;
