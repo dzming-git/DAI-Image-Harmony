@@ -1,6 +1,14 @@
 #include "image_loaders/local_image/local_image_loader.h"
 #include <iostream>
 #include <sstream>
+#include <filesystem>
+
+// 计算规范化后的文件路径字符串的哈希值
+int64_t getNormalizedFilePathHash(const std::string& filePath) {
+    std::hash<std::string> hasher;
+    std::filesystem::path canonicalPath = std::filesystem::canonical(filePath);
+    return static_cast<int64_t>(hasher(canonicalPath.string()));
+}
 
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
     std::cout << "Create LocalImageLoader" << std::endl;
@@ -15,7 +23,13 @@ bool LocalImageLoader::setArgument(std::string key, std::string value) {
         std::stringstream ss(value);
         std::string path;
         while (getline(ss, path, '\n')) {
-            this->paths.emplace_back(path);
+            int64_t hash = getNormalizedFilePathHash(path);
+            hashs.emplace_back(hash);
+            filePathMap.emplace(hash, path);
+        }
+        totalCnt = hashs.size();
+        for (int i = 0; i < totalCnt - 1; ++i) {
+            nextMap[hashs[i]] = nextMap[hashs[i + 1]];
         }
         return true;
     }
@@ -23,7 +37,6 @@ bool LocalImageLoader::setArgument(std::string key, std::string value) {
 }
 
 bool LocalImageLoader::start() {
-    totalCnt = this->paths.size();
     return true;
 }
 
@@ -37,20 +50,31 @@ bool LocalImageLoader::hasNext() {
 
 ImageInfo LocalImageLoader::next(int64_t previousImageId) {
     ImageInfo imageInfo;
-    // TODO 暂时没有开发previousImageId相关的功能
-    img.release();
-    if (hasNext() && img.empty()) {
-        img = cv::imread(this->paths[currIdx++]);
-        imageInfo.image = img;
-        // TODO 临时代码
-        imageInfo.imageId = rand();
+    int64_t imageId = 0;
+    if (0 == previousImageId) {
+        if (hasNext()) {
+            imageId = hashs[currIdx++];
+        }
+    }
+    else if (nextMap.find(previousImageId) != nextMap.end()) {
+        imageId = nextMap[previousImageId];
+    }
+    if (imageId) {
+        imageInfo.image = cv::imread(filePathMap[imageId]);
+        imageInfo.imageId = imageId;
     }
     return imageInfo;
 }
 
 ImageInfo LocalImageLoader::getImgById(int64_t imageId) {
-    // TODO 未开发
     ImageInfo imageInfo;
+    if (filePathMap.find(imageId) != filePathMap.end()) {
+        imageInfo.image = cv::imread(filePathMap[imageId]);
+        imageInfo.imageId = imageId;
+    }
+    else {
+        imageInfo.imageId = 0;
+    }
     return imageInfo;
 }
 

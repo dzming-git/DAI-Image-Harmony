@@ -29,8 +29,9 @@ public:
     virtual size_t getCurrentIndex() override;
     virtual ~LocalImageLoader() override;
 private:
-    std::vector<std::string> paths;
-    cv::Mat img;
+    std::vector<int64_t> hashs;
+    std::unordered_map<int64_t, std::string> filePathMap;
+    std::unordered_map<int64_t, int64_t> nextMap;
     size_t totalCnt;
     size_t currIdx;
 };
