@@ -178,6 +178,7 @@ ImageInfo WebcameraHikvisionLoader::getImgById(int64_t imageId) {
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
     cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
     cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    imageInfo.imageId = imageId;
     return imageInfo;
 }
 
