@@ -10,6 +10,14 @@ int64_t getNormalizedFilePathHash(const std::string& filePath) {
     return static_cast<int64_t>(hasher(canonicalPath.string()));
 }
 
+// 判断是否是图片文件
+bool isImageFile(const std::filesystem::path& path) {
+    static const std::vector<std::string> imageExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+    std::string extension = path.extension().string();
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+    return std::find(imageExtensions.begin(), imageExtensions.end(), extension) != imageExtensions.end();
+}
+
 LocalImageLoader::LocalImageLoader(): totalCnt(0), currIdx(0) {
     std::cout << "Create LocalImageLoader" << std::endl;
 }
@@ -19,10 +27,25 @@ LocalImageLoader::~LocalImageLoader() {
 }
 
 bool LocalImageLoader::setArgument(std::string key, std::string value) {
+    std::vector<std::string> paths;
     if ("ImagePaths" == key) {
         std::stringstream ss(value);
         std::string path;
         while (getline(ss, path, '\n')) {
+            // TODO 缺少判断文件是否存在与文件是否为图片
+            paths.emplace_back(path);
+        }
+    }
+    else if ("ImageFolderPath" == key) {
+        for (const auto& entry : std::filesystem::directory_iterator(value)) {
+            if (entry.is_regular_file() && isImageFile(entry.path())) {
+                paths.emplace_back(entry.path());
+                std::cout << "Found image file: " << entry.path() << std::endl;
+            }
+        }
+    }
+    if (!paths.empty()) {
+        for (auto path : paths) {
             int64_t hash = getNormalizedFilePathHash(path);
             hashs.emplace_back(hash);
             filePathMap.emplace(hash, path);
