@@ -125,6 +125,7 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
         int64_t connectId = request->connectid();
         int64_t imageId = request->imageid();
         std::string format = request->format();
+        bool onlyImageId = request->onlyimageid();
         int paramsCnt = request->params_size();
         std::vector<int> params(paramsCnt);
         for (int i = 0; i < paramsCnt; ++i) {
@@ -152,28 +153,30 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
                 throw  std::runtime_error("Image is NULL.\n");
             }
             response->set_imageid(imageInfo.imageId);
-            if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
-                double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
-                double expectedAspectRatio = (double)expectedW / expectedH;
-                if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
-                    std::string originalAspectRatio = std::to_string(aspectRatio);
-                    std::string currentAspectRatio = std::to_string(expectedAspectRatio);
-                    responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+            if (!onlyImageId) {
+                if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
+                    double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
+                    double expectedAspectRatio = (double)expectedW / expectedH;
+                    if (abs(aspectRatio - expectedAspectRatio) > 0.01) {
+                        std::string originalAspectRatio = std::to_string(aspectRatio);
+                        std::string currentAspectRatio = std::to_string(expectedAspectRatio);
+                        responseMessage += "The aspect ratio has changed. Original aspect ratio: " + originalAspectRatio + ". Current aspect ratio: " + currentAspectRatio + ".\n";
+                    }
+                    cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
                 }
-                cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
+                response->set_h(imageInfo.image.rows);
+                response->set_w(imageInfo.image.cols);
+                // 无参数时，默认使用 .jpg 无损压缩
+                if (0 == format.size()) {
+                    format = ".jpg";
+                    params = {cv::IMWRITE_PNG_COMPRESSION, 100};
+                }
+                std::vector<uchar> buf;
+                // TODO: 在这里压缩图像会有一些性能冗余
+                cv::imencode(format, imageInfo.image, buf, params);
+                size_t bufSize = buf.size();
+                response->set_buf(&buf[0], buf.size());
             }
-            response->set_h(imageInfo.image.rows);
-            response->set_w(imageInfo.image.cols);
-            // 无参数时，默认使用 .jpg 无损压缩
-            if (0 == format.size()) {
-                format = ".jpg";
-                params = {cv::IMWRITE_PNG_COMPRESSION, 100};
-            }
-            std::vector<uchar> buf;
-            // TODO: 在这里压缩图像会有一些性能冗余
-            cv::imencode(format, imageInfo.image, buf, params);
-            size_t bufSize = buf.size();
-            response->set_buf(&buf[0], buf.size());
         }
     } catch (const std::exception& e) {
         responseCode = 400;
