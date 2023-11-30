@@ -79,11 +79,13 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
         if (nullptr == imgLoader) {
             throw  std::runtime_error("The imgLoader is nullptr. Unable to load the image.\n");
         }
-        
+        imageLoaderController->startUsingLoader(connectId);
         auto imageInfo = imgLoader->getImgById(imageId);
         if (0 == imageInfo.imageId || imageInfo.image.empty()) {
+            imageLoaderController->stopUsingLoader(connectId);
             throw  std::runtime_error("Image is NULL.\n");
         }
+        imageLoaderController->stopUsingLoader(connectId);
         if (0 != imageInfo.imageId) {
             response->set_imageid(imageInfo.imageId);
             if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
@@ -142,13 +144,16 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
             responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
         }
         
+        imageLoaderController->startUsingLoader(connectId);
         if (0 == imageId && !imgLoader->hasNext()) {
+            imageLoaderController->stopUsingLoader(connectId);
             responseCode = 400;
             responseMessage += "No more images available.\n";
         }
         
         else {
             auto imageInfo = imgLoader->next(imageId);
+            imageLoaderController->stopUsingLoader(connectId);
             if (0 == imageInfo.imageId || imageInfo.image.empty()) {
                 throw  std::runtime_error("Image is NULL.\n");
             }

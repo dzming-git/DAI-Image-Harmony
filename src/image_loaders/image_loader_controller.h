@@ -30,10 +30,14 @@ public:
     struct ConnectionInfo {
         int64_t loaderArgsHash = -1;
         std::chrono::steady_clock::time_point lastRequestTime;
+        int userCnt; // 使用者数量
+        pthread_mutex_t userCntLock;
         void updateTime();
     };
     static ImageLoaderController* getSingletonInstance();
     ImageLoaderBase* getImageLoader(int64_t connectionId);
+    bool startUsingLoader(int64_t connectionId);
+    bool stopUsingLoader(int64_t connectionId);
     int64_t registerImageLoader(std::unordered_map<std::string, std::string>, ImageLoaderFactory::SourceType);
     bool unregisterImageLoader(int64_t);
     void setConnectionTimeout(int timeout);
@@ -47,9 +51,6 @@ private:
     static ImageLoaderController* instance;
     static pthread_mutex_t lock;
     
-    // TODO 有时候会出现已经触发超时，loader被删除，但是该loader还在使用的错误
-    // 预想解决方案 loadersMap封装成一个单例类，某个id被调用时，cnt++
-    // 某个ImageLoaderInfo的析构函数中使用这个单例类将对应id的cnt--
     std::unordered_map<int64_t /* loaderArgsHash */, ImageLoaderInfo> loadersMap;
     std::unordered_map<int64_t /* connectionId */, ConnectionInfo> connectionsMap;
 };

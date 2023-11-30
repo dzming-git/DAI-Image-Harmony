@@ -46,7 +46,10 @@ void ImageLoaderController::checkConnections() {
         for (auto& entry : connectionsMap) {
             int64_t connectionId = entry.first;
             ConnectionInfo& info = entry.second;
-
+            // 如果正在使用，则跳过
+            if (info.userCnt) {
+                continue;
+            }
             std::chrono::duration<double> elapsedTime = currentTime - info.lastRequestTime;
             if (elapsedTime.count() >= connectionTimeout) {
                 eraseConnectionIds.emplace_back(connectionId);
@@ -66,7 +69,7 @@ void ImageLoaderController::startCheckConnections() {
 } 
 
 // 懒汉单例模式
-ImageLoaderController *ImageLoaderController::getSingletonInstance() {
+ImageLoaderController* ImageLoaderController::getSingletonInstance() {
 	if (nullptr == instance) {
 		pthread_mutex_lock(&lock);
 		if (nullptr == instance) {
@@ -78,13 +81,31 @@ ImageLoaderController *ImageLoaderController::getSingletonInstance() {
 	return instance;
 }
 
-ImageLoaderBase *ImageLoaderController::getImageLoader(int64_t connectionId) {
+ImageLoaderBase* ImageLoaderController::getImageLoader(int64_t connectionId) {
     auto loaderArgsHashIt = connectionsMap.find(connectionId);
     if (connectionsMap.end() == loaderArgsHashIt) return nullptr;
     auto imageLoaderIt = loadersMap.find(loaderArgsHashIt->second.loaderArgsHash);
     loaderArgsHashIt->second.updateTime();
     if (loadersMap.end() == imageLoaderIt) return nullptr;
     return imageLoaderIt->second.ptr;
+}
+
+bool ImageLoaderController::startUsingLoader(int64_t connectionId) {
+    auto connectionIt = connectionsMap.find(connectionId);
+    if (connectionsMap.end() == connectionIt) return false;
+    pthread_mutex_lock(&(connectionIt->second.userCntLock));
+    ++connectionIt->second.userCnt;
+    pthread_mutex_unlock(&(connectionIt->second.userCntLock));
+    connectionIt->second.updateTime();
+}
+
+bool ImageLoaderController::stopUsingLoader(int64_t connectionId) {
+    auto connectionIt = connectionsMap.find(connectionId);
+    if (connectionsMap.end() == connectionIt) return false;
+    pthread_mutex_lock(&(connectionIt->second.userCntLock));
+    --connectionIt->second.userCnt;
+    pthread_mutex_unlock(&(connectionIt->second.userCntLock));
+    connectionIt->second.updateTime();
 }
 
 int64_t ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type) {
