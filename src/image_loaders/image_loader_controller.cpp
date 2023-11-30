@@ -97,6 +97,7 @@ bool ImageLoaderController::startUsingLoader(int64_t connectionId) {
     ++connectionIt->second.userCnt;
     pthread_mutex_unlock(&(connectionIt->second.userCntLock));
     connectionIt->second.updateTime();
+    return true;
 }
 
 bool ImageLoaderController::stopUsingLoader(int64_t connectionId) {
@@ -106,6 +107,7 @@ bool ImageLoaderController::stopUsingLoader(int64_t connectionId) {
     --connectionIt->second.userCnt;
     pthread_mutex_unlock(&(connectionIt->second.userCntLock));
     connectionIt->second.updateTime();
+    return true;
 }
 
 int64_t ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type) {
