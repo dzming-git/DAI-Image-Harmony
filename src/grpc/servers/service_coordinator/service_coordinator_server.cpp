@@ -15,12 +15,11 @@ grpc::Status ServiceCoordinatorServer::informPreviousServiceInfo(grpc::ServerCon
     std::string responseMessage;
     try {
         // 当前版本该服务没有前置服务
-        throw  std::runtime_error("The current version of this service does not have a front-end service.\n");
+        throw std::runtime_error("The current version of this service does not have a front-end service.\n");
     } catch (const std::exception& e) {
         responseCode = 400;
-        responseMessage = e.what();
+        responseMessage += e.what();
     }
-
     response->mutable_response()->set_code(responseCode);
     response->mutable_response()->set_message(responseMessage);
     return grpc::Status::OK;
@@ -38,7 +37,7 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         }
 
         if (args.find("SourceType") == args.end()) {
-            throw  std::runtime_error("SourceType is not set.\n");
+            throw std::runtime_error("SourceType is not set.\n");
         }
 
         ImageLoaderFactory::SourceType sourceType; 
@@ -47,16 +46,16 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
             // 匹配不到，用编辑距离智能匹配
             std::string mostSimilarType = ImageLoaderFactory::getMostSimilarSourceType(args["SourceType"]);
             sourceType = ImageLoaderFactory::sourceTypeMap[mostSimilarType];
-            responseMessage = "Cannot match " + args["SourceType"] + ". The closest match is " + mostSimilarType + ".\n";
+            responseMessage += "Cannot match " + args["SourceType"] + ". The closest match is " + mostSimilarType + ".\n";
         }
         else {
             sourceType = imgTypeIt->second;
-            responseMessage = "Match.\n";
+            responseMessage += "Match.\n";
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         int64_t connectId = imageLoaderController->registerImageLoader(args, sourceType);
         if (-1 == connectId) {
-            throw  std::runtime_error("Register image loader failed.\n");
+            throw std::runtime_error("Register image loader failed.\n");
         }
         serviceCoordinator::Argument argument;
         argument.set_key("ConnectID");
@@ -64,7 +63,7 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         response->add_args()->CopyFrom(argument);
     } catch (const std::exception& e) {
         responseCode = 400;
-        responseMessage = e.what();
+        responseMessage += e.what();
     }
 
     response->mutable_response()->set_code(responseCode);
