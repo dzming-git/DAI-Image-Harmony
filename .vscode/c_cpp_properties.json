@@ -7,7 +7,9 @@
                 "/usr/local/include/opencv4",
                 "/usr/local/include",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/generated"
+                "${workspaceFolder}/generated",
+                "${workspaceFolder}/",
+                "${workspaceFolder}/thirdparty/HCNetSDK/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
