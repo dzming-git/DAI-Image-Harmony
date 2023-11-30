@@ -155,7 +155,7 @@ int64_t ImageLoaderController::registerImageLoader(std::unordered_map<std::strin
             delete loadersMap[loaderArgsHash].ptr;
             loadersMap.erase(loaderArgsHash);
             std::cout << "image loader start failed" << std::endl;
-            return -1;
+            return 0;
         }
     }
     std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;

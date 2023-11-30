@@ -28,7 +28,7 @@ public:
         int cnt = 0;
     };
     struct ConnectionInfo {
-        int64_t loaderArgsHash = -1;
+        int64_t loaderArgsHash = 0;
         std::chrono::steady_clock::time_point lastRequestTime;
         int userCnt; // 使用者数量
         pthread_mutex_t userCntLock;
