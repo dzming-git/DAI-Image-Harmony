@@ -168,8 +168,13 @@ ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
     }
     imageInfo.imageId = videoBufInfo->historyOrder.back();
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageInfo.imageId];
-    cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
-    cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    if (historyFrameMemoryPoolOffset) {
+        cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
+        cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    }
+    else {
+        imageInfo.imageId = 0;
+    }
     return imageInfo;
 }
 
