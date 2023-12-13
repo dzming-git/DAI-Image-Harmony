@@ -149,15 +149,13 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         auto imgLoader = imageLoaderController->getImageLoader(connectId);
         if (nullptr == imgLoader) {
-            responseCode = 400;
-            responseMessage += "The imgLoader is nullptr. Unable to load the image.\n";
+            throw std::runtime_error("The imgLoader is nullptr. Unable to load the image.\n");
         }
         
         imageLoaderController->startUsingLoader(connectId);
         if (0 == imageId && !imgLoader->hasNext()) {
             imageLoaderController->stopUsingLoader(connectId);
-            responseCode = 400;
-            responseMessage += "No more images available.\n";
+            throw std::runtime_error("Image is NULL.\n");
         }
         
         else {
