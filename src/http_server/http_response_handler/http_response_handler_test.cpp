@@ -41,15 +41,15 @@ inline std::string matToBase64(const cv::Mat& image) {
 }
 
 HttpResponseHandlerTset::HttpResponseHandlerTset() {
-    imgLoader = ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType::LocalImage);
-    imgLoader->setArgument("ImagePaths", "/workspace/tests/images/lena.png");
+    imageLoader = ImageLoaderFactory::createImageLoader(ImageLoaderFactory::SourceType::LocalImage);
+    imageLoader->setArgument("ImagePaths", "/workspace/tests/images/lena.png");
 }
 
 std::string HttpResponseHandlerTset::response(const std::string &) {
-    if (!imgLoader->hasNext()) {
+    if (!imageLoader->hasNext()) {
         return "HTTP/1.1 404 Not Found\nContent-Type: text/html\n\n404 Not Found";
     }
-    auto imageInfo = imgLoader->next();
+    auto imageInfo = imageLoader->next();
     std::string encodedImage = matToBase64(imageInfo.image);
 
     std::string html = "<!DOCTYPE html>\n"
@@ -58,7 +58,7 @@ std::string HttpResponseHandlerTset::response(const std::string &) {
                        "<title>显示图片</title>\n"
                        "</head>\n"
                        "<body>\n"
-                       "<img src=\"" + encodedImage + "\" alt=\"图片\">\n"
+                       "<image src=\"" + encodedImage + "\" alt=\"图片\">\n"
                        "</body>\n"
                        "</html>";
 

@@ -166,11 +166,14 @@ ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
     if (nullptr == videoBufInfo->bufShallowcopy) {
         return imageInfo;
     }
+    if (videoBufInfo->historyOrder.empty()) {
+        return imageInfo;
+    }
     imageInfo.imageId = videoBufInfo->historyOrder.back();
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageInfo.imageId];
     if (historyFrameMemoryPoolOffset) {
-        cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
-        cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+        cv::Mat imageYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
+        cv::cvtColor(imageYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
     }
     else {
         imageInfo.imageId = 0;
@@ -178,11 +181,11 @@ ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
     return imageInfo;
 }
 
-ImageInfo WebcameraHikvisionLoader::getImgById(int64_t imageId) {
+ImageInfo WebcameraHikvisionLoader::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
-    cv::Mat imgYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
-    cv::cvtColor(imgYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
+    cv::Mat imageYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
+    cv::cvtColor(imageYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
     imageInfo.imageId = imageId;
     return imageInfo;
 }

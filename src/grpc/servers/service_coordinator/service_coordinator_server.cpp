@@ -41,25 +41,30 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         }
 
         ImageLoaderFactory::SourceType sourceType; 
-        auto imgTypeIt = ImageLoaderFactory::sourceTypeMap.find(args["SourceType"]);
-        if (ImageLoaderFactory::sourceTypeMap.end() == imgTypeIt) {
+        auto sourceTypeIt = ImageLoaderFactory::sourceTypeMap.find(args["SourceType"]);
+        if (ImageLoaderFactory::sourceTypeMap.end() == sourceTypeIt) {
             // 匹配不到，用编辑距离智能匹配
             std::string mostSimilarType = ImageLoaderFactory::getMostSimilarSourceType(args["SourceType"]);
             sourceType = ImageLoaderFactory::sourceTypeMap[mostSimilarType];
             responseMessage += "Cannot match " + args["SourceType"] + ". The closest match is " + mostSimilarType + ".\n";
         }
         else {
-            sourceType = imgTypeIt->second;
+            sourceType = sourceTypeIt->second;
             responseMessage += "Match.\n";
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        int64_t connectId = imageLoaderController->registerImageLoader(args, sourceType);
-        if (0 == connectId) {
+        int64_t loaderArgsHash = 0;
+        int64_t connectId = 0;
+        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId);
+        if (!ok) {
             throw std::runtime_error("Register image loader failed.\n");
         }
         serviceCoordinator::Argument argument;
         argument.set_key("ConnectID");
         argument.set_value(std::to_string(connectId));
+        response->add_args()->CopyFrom(argument);
+        argument.set_key("LoaderArgsHash");
+        argument.set_value(std::to_string(loaderArgsHash));
         response->add_args()->CopyFrom(argument);
     } catch (const std::exception& e) {
         responseCode = 400;

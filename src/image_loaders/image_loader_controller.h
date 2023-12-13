@@ -38,7 +38,7 @@ public:
     ImageLoaderBase* getImageLoader(int64_t connectionId);
     bool startUsingLoader(int64_t connectionId);
     bool stopUsingLoader(int64_t connectionId);
-    int64_t registerImageLoader(std::unordered_map<std::string, std::string>, ImageLoaderFactory::SourceType);
+    bool registerImageLoader(std::unordered_map<std::string, std::string>, ImageLoaderFactory::SourceType, int64_t &loaderArgsHash, int64_t &connectionId);
     bool unregisterImageLoader(int64_t);
     void setConnectionTimeout(int timeout);
 private:

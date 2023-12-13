@@ -22,7 +22,7 @@ public:
     HttpResponseHandlerTset();
     virtual std::string response(const std::string&);
 private:
-    ImageLoaderBase* imgLoader;
+    ImageLoaderBase* imageLoader;
 };
 
 #endif /* _HTTP_RESPONSE_HANDLER_TEST_H_ */

@@ -89,7 +89,7 @@ ImageInfo LocalImageLoader::next(int64_t previousImageId) {
     return imageInfo;
 }
 
-ImageInfo LocalImageLoader::getImgById(int64_t imageId) {
+ImageInfo LocalImageLoader::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
     if (filePathMap.find(imageId) != filePathMap.end()) {
         imageInfo.image = cv::imread(filePathMap[imageId]);

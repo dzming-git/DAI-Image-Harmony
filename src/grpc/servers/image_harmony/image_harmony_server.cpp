@@ -11,33 +11,38 @@ ImageHarmonyServer::ImageHarmonyServer() {
 ImageHarmonyServer::~ImageHarmonyServer() {
 }
 
-grpc::Status ImageHarmonyServer::registerImgTransService(grpc::ServerContext*, const imageHarmony::RegisterImgTransServiceRequest *request, imageHarmony::RegisterImgTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::registerImageTransService(grpc::ServerContext*, const imageHarmony::RegisterImageTransServiceRequest *request, imageHarmony::RegisterImageTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     try {
         response->set_connectid(0);
-        ImageLoaderFactory::SourceType imgType;
-        auto imgTypeIt = ImageLoaderFactory::sourceTypeMap.find(request->imgtype());
-        if (ImageLoaderFactory::sourceTypeMap.end() == imgTypeIt) {
-            // 匹配不到，用编辑距离智能匹配
-            std::string mostSimilarType = ImageLoaderFactory::getMostSimilarSourceType(request->imgtype());
-            imgType = ImageLoaderFactory::sourceTypeMap[mostSimilarType];
-            responseMessage += "Cannot match " + request->imgtype() + ". The closest match is " + mostSimilarType + ".\n";
-        }
-        else {
-            imgType = imgTypeIt->second;
-            responseMessage += "Match.\n";
-        }
+        int64_t loaderArgsHash = request->loaderargshash();
         std::unordered_map<std::string, std::string> args;
-        int argsCnt = request->args_size();
-        for (int i = 0; i < argsCnt; ++i) {
-            auto arg = request->args(i);
-            args.emplace(arg.key(), arg.value());
+        ImageLoaderFactory::SourceType sourceType;
+        if (0 == loaderArgsHash) {
+            auto sourceTypeIt = ImageLoaderFactory::sourceTypeMap.find(request->sourcetype());
+            if (ImageLoaderFactory::sourceTypeMap.end() == sourceTypeIt) {
+                // 匹配不到，用编辑距离智能匹配
+                std::string mostSimilarType = ImageLoaderFactory::getMostSimilarSourceType(request->sourcetype());
+                sourceType = ImageLoaderFactory::sourceTypeMap[mostSimilarType];
+                responseMessage += "Cannot match " + request->sourcetype() + ". The closest match is " + mostSimilarType + ".\n";
+            }
+            else {
+                sourceType = sourceTypeIt->second;
+                responseMessage += "Match.\n";
+            }
+            int argsCnt = request->args_size();
+            for (int i = 0; i < argsCnt; ++i) {
+                auto arg = request->args(i);
+                args.emplace(arg.key(), arg.value());
+            }
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        int64_t connectId = imageLoaderController->registerImageLoader(args, imgType);
+        int64_t connectId = 0;
+        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId);
+        response->set_loaderargshash(loaderArgsHash);
         response->set_connectid(connectId);
-        if (0 == connectId) {
+        if (!ok) {
             throw std::runtime_error("Register image loader failed.\n");
         }
     } catch (const std::exception& e) {
@@ -50,7 +55,7 @@ grpc::Status ImageHarmonyServer::registerImgTransService(grpc::ServerContext*, c
     return grpc::Status::OK;
 }
 
-grpc::Status ImageHarmonyServer::unregisterImgTransService(grpc::ServerContext *context, const imageHarmony::UnregisterImgTransServiceRequest *request, imageHarmony::UnregisterImgTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::unregisterImageTransService(grpc::ServerContext *context, const imageHarmony::UnregisterImageTransServiceRequest *request, imageHarmony::UnregisterImageTransServiceResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     try {
@@ -84,12 +89,12 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
         int expectedH = request->expectedh();
         response->set_imageid(0);
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        auto imgLoader = imageLoaderController->getImageLoader(connectId);
-        if (nullptr == imgLoader) {
-            throw std::runtime_error("The imgLoader is nullptr. Unable to load the image.\n");
+        auto imageLoader = imageLoaderController->getImageLoader(connectId);
+        if (nullptr == imageLoader) {
+            throw std::runtime_error("The imageLoader is nullptr. Unable to load the image.\n");
         }
         imageLoaderController->startUsingLoader(connectId);
-        auto imageInfo = imgLoader->getImgById(imageId);
+        auto imageInfo = imageLoader->getImageById(imageId);
         if (0 == imageInfo.imageId || imageInfo.image.empty()) {
             imageLoaderController->stopUsingLoader(connectId);
             throw std::runtime_error("Image is NULL.\n");
@@ -147,19 +152,19 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
         response->set_imageid(0);        
 
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
-        auto imgLoader = imageLoaderController->getImageLoader(connectId);
-        if (nullptr == imgLoader) {
-            throw std::runtime_error("The imgLoader is nullptr. Unable to load the image.\n");
+        auto imageLoader = imageLoaderController->getImageLoader(connectId);
+        if (nullptr == imageLoader) {
+            throw std::runtime_error("The imageLoader is nullptr. Unable to load the image.\n");
         }
         
         imageLoaderController->startUsingLoader(connectId);
-        if (0 == imageId && !imgLoader->hasNext()) {
+        if (0 == imageId && !imageLoader->hasNext()) {
             imageLoaderController->stopUsingLoader(connectId);
             throw std::runtime_error("Image is NULL.\n");
         }
         
         else {
-            auto imageInfo = imgLoader->next(imageId);
+            auto imageInfo = imageLoader->next(imageId);
             imageLoaderController->stopUsingLoader(connectId);
             if (0 == imageInfo.imageId || imageInfo.image.empty()) {
                 throw std::runtime_error("Image is NULL.\n");

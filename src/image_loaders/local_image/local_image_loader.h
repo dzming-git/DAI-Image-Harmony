@@ -24,7 +24,7 @@ public:
     virtual bool isUnique() override;
     virtual bool hasNext() override;
     virtual ImageInfo next(int64_t previousImageId = 0) override;
-    virtual ImageInfo getImgById(int64_t imageId) override;
+    virtual ImageInfo getImageById(int64_t imageId) override;
     virtual size_t getTotalCount() override;
     virtual size_t getCurrentIndex() override;
     virtual ~LocalImageLoader() override;
