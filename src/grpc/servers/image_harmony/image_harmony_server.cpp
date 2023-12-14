@@ -17,6 +17,7 @@ grpc::Status ImageHarmonyServer::registerImageTransService(grpc::ServerContext*,
     try {
         response->set_connectid(0);
         int64_t loaderArgsHash = request->loaderargshash();
+        bool isUnique = request->isunique();
         std::unordered_map<std::string, std::string> args;
         ImageLoaderFactory::SourceType sourceType;
         if (0 == loaderArgsHash) {
@@ -39,7 +40,7 @@ grpc::Status ImageHarmonyServer::registerImageTransService(grpc::ServerContext*,
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         int64_t connectId = 0;
-        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId);
+        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId, isUnique);
         response->set_loaderargshash(loaderArgsHash);
         response->set_connectid(connectId);
         if (!ok) {

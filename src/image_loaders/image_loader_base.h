@@ -26,7 +26,6 @@ class ImageLoaderBase {
 public:
     virtual bool setArgument(std::string, std::string) = 0;
     virtual bool start() = 0;
-    virtual bool isUnique() = 0;
     virtual bool hasNext() = 0;
     virtual ImageInfo next(int64_t previousImageId = 0) = 0;
     virtual ImageInfo getImageById(int64_t imageId) = 0;

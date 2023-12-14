@@ -110,7 +110,7 @@ bool ImageLoaderController::stopUsingLoader(int64_t connectionId) {
     return true;
 }
 
-bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type, int64_t &loaderArgsHash, int64_t &connectionId) {
+bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type, int64_t &loaderArgsHash, int64_t &connectionId, bool isUnique) {
     LOG("registerImageLoader\n");
     // 用hash值查找已建立的加载器
     if (0 != loaderArgsHash) {
@@ -139,7 +139,7 @@ bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, 
             needCreate = true;
         }
         // 有这个源的信息，且不是独占，数量+1
-        else if (false == loadersMap[loaderArgsHash].ptr->isUnique()) {
+        else if (!isUnique) {
             ++loadersMap[loaderArgsHash].cnt;
         }
         // 有这个源的信息，且是独占，新建

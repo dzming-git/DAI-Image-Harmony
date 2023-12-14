@@ -63,10 +63,6 @@ bool LocalImageLoader::start() {
     return true;
 }
 
-bool LocalImageLoader::isUnique() {
-    return true;
-}
-
 bool LocalImageLoader::hasNext() {
     return currIdx < totalCnt;
 }

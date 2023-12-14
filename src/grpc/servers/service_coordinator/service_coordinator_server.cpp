@@ -40,6 +40,11 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
             throw std::runtime_error("SourceType is not set.\n");
         }
 
+        bool isUnique = false;
+        if (args.find("IsUnique") != args.end() && args["IsUnique"] == "1") {
+            isUnique = true;
+        }
+
         ImageLoaderFactory::SourceType sourceType; 
         auto sourceTypeIt = ImageLoaderFactory::sourceTypeMap.find(args["SourceType"]);
         if (ImageLoaderFactory::sourceTypeMap.end() == sourceTypeIt) {
@@ -55,7 +60,7 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         int64_t loaderArgsHash = 0;
         int64_t connectId = 0;
-        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId);
+        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId, isUnique);
         if (!ok) {
             throw std::runtime_error("Register image loader failed.\n");
         }

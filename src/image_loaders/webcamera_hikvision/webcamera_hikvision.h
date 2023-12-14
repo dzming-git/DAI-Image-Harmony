@@ -23,7 +23,6 @@ public:
 
     bool setArgument(std::string, std::string) override;
     virtual bool start() override;
-    virtual bool isUnique() override;
     virtual bool hasNext() override;
     virtual ImageInfo next(int64_t previousImageId = 0) override;
     virtual ImageInfo getImageById(int64_t imageId) override;

@@ -151,10 +151,6 @@ bool WebcameraHikvisionLoader::start() {
     return true;
 }
 
-bool WebcameraHikvisionLoader::isUnique() {
-    return false;
-}
-
 bool WebcameraHikvisionLoader::hasNext() {
     return playOk;
     // return playOk && videoBufInfo->updated;
