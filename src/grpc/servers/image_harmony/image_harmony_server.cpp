@@ -78,16 +78,17 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
     std::string responseMessage;      
     try {
         int64_t connectId = request->connectid();
-        int64_t imageId = request->imageid();
-        std::string format = request->format();
-        int paramsCnt = request->params_size();
+        auto imageRequest = request->imagerequest();
+        int64_t imageId = imageRequest.imageid();
+        std::string format = imageRequest.format();
+        int paramsCnt = imageRequest.params_size();
         std::vector<int> params(paramsCnt);
         for (int i = 0; i < paramsCnt; ++i) {
-            params[i] = request->params(i);
+            params[i] = imageRequest.params(i);
         }
-        int expectedW = request->expectedw();
-        int expectedH = request->expectedh();
-        response->set_imageid(0);
+        int expectedW = imageRequest.expectedw();
+        int expectedH = imageRequest.expectedh();
+        response->mutable_imageresponse()->set_imageid(0);
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         auto imageLoader = imageLoaderController->getImageLoader(connectId);
         if (nullptr == imageLoader) {
@@ -101,7 +102,7 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
         }
         imageLoaderController->stopUsingLoader(connectId);
         if (0 != imageInfo.imageId) {
-            response->set_imageid(imageInfo.imageId);
+            response->mutable_imageresponse()->set_imageid(imageInfo.imageId);
             if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
                 double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
                 double expectedAspectRatio = (double)expectedW / expectedH;
@@ -112,8 +113,8 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
                 }
                 cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
             }
-            response->set_h(imageInfo.image.rows);
-            response->set_w(imageInfo.image.cols);
+            response->mutable_imageresponse()->set_height(imageInfo.image.rows);
+            response->mutable_imageresponse()->set_width(imageInfo.image.cols);
             // 无参数时，默认使用 .jpg 无损压缩
             if (0 == format.size()) {
                 format = ".jpg";
@@ -123,7 +124,7 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
             // TODO: 在这里压缩图像会有一些性能冗余
             cv::imencode(format, imageInfo.image, buf, params);
             size_t bufSize = buf.size();
-            response->set_buf(&buf[0], buf.size());
+            response->mutable_imageresponse()->set_buf(&buf[0], buf.size());
         }
     } catch (const std::exception& e) {
         responseCode = 400;
@@ -139,17 +140,18 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
     std::string responseMessage;
     try {
         int64_t connectId = request->connectid();
-        int64_t imageId = request->imageid();
-        std::string format = request->format();
+        auto imageRequest = request->imagerequest();
+        int64_t imageId = imageRequest.imageid();
+        std::string format = imageRequest.format();
         bool onlyImageId = request->onlyimageid();
-        int paramsCnt = request->params_size();
+        int paramsCnt = imageRequest.params_size();
         std::vector<int> params(paramsCnt);
         for (int i = 0; i < paramsCnt; ++i) {
-            params[i] = request->params(i);
+            params[i] = imageRequest.params(i);
         }
-        int expectedW = request->expectedw();
-        int expectedH = request->expectedh();
-        response->set_imageid(0);        
+        int expectedW = imageRequest.expectedw();
+        int expectedH = imageRequest.expectedh();
+        response->mutable_imageresponse()->set_imageid(0);        
 
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         auto imageLoader = imageLoaderController->getImageLoader(connectId);
@@ -169,7 +171,7 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
             if (0 == imageInfo.imageId || imageInfo.image.empty()) {
                 throw std::runtime_error("Image is NULL.\n");
             }
-            response->set_imageid(imageInfo.imageId);
+            response->mutable_imageresponse()->set_imageid(imageInfo.imageId);
             if (!onlyImageId) {
                 if (expectedW * expectedH && !(expectedW == imageInfo.image.cols && expectedH == imageInfo.image.rows)) {
                     double aspectRatio = (double)imageInfo.image.cols / imageInfo.image.rows;
@@ -181,8 +183,8 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
                     }
                     cv::resize(imageInfo.image, imageInfo.image, cv::Size(expectedW, expectedH));
                 }
-                response->set_h(imageInfo.image.rows);
-                response->set_w(imageInfo.image.cols);
+                response->mutable_imageresponse()->set_height(imageInfo.image.rows);
+                response->mutable_imageresponse()->set_width(imageInfo.image.cols);
                 // 无参数时，默认使用 .jpg 无损压缩
                 if (0 == format.size()) {
                     format = ".jpg";
@@ -192,7 +194,7 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
                 // TODO: 在这里压缩图像会有一些性能冗余
                 cv::imencode(format, imageInfo.image, buf, params);
                 size_t bufSize = buf.size();
-                response->set_buf(&buf[0], buf.size());
+                response->mutable_imageresponse()->set_buf(&buf[0], buf.size());
             }
         }
     } catch (const std::exception& e) {
