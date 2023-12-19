@@ -1,6 +1,8 @@
 #include "image_loaders/image_loader_factory.h"
 #include "image_loaders/local_image/local_image_loader.h"
 #include "image_loaders/webcamera_hikvision/webcamera_hikvision.h"
+#include "image_loaders/opencv_video_reader/cpu/opencv_video_reader_cpu.h"
+#include "image_loaders/opencv_video_reader/gpu/opencv_video_reader_gpu.h"
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -33,6 +35,8 @@ int minDistance(std::string word1, std::string word2) {
 
 std::unordered_map<std::string, ImageLoaderFactory::SourceType> ImageLoaderFactory::sourceTypeMap = {
         {"hikvision", ImageLoaderFactory::SourceType::WebCameraHikvision},
+        {"video cpu", ImageLoaderFactory::SourceType::OpencvVideoReader_CPU},
+        {"video gpu", ImageLoaderFactory::SourceType::OpencvVideoReader_GPU},
         {"local image", ImageLoaderFactory::SourceType::LocalImage},
 };
 
@@ -65,6 +69,10 @@ ImageLoaderBase *ImageLoaderFactory::createImageLoader(ImageLoaderFactory::Sourc
         return new LocalImageLoader();
     case ImageLoaderFactory::SourceType::WebCameraHikvision:
         return new HikvisionVideoReader();
+    case ImageLoaderFactory::SourceType::OpencvVideoReader_CPU:
+        return new OpencvVideoReader_CPU();
+    case ImageLoaderFactory::SourceType::OpencvVideoReader_GPU:
+        return new OpencvVideoReader_GPU();
     }
     return nullptr;
 }

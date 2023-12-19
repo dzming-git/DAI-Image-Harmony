@@ -25,6 +25,8 @@ public:
         WebImage,
         WebVideo,
         WebCameraHikvision,
+        OpencvVideoReader_CPU,
+        OpencvVideoReader_GPU,
         GRPCImage,
         GRPCVideo,
     };

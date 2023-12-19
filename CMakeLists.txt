@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 # 子模块
 add_subdirectory(src/image_loaders/webcamera_hikvision)
+add_subdirectory(src/image_loaders/opencv_video_reader/cpu)
+add_subdirectory(src/image_loaders/opencv_video_reader/gpu)
 add_subdirectory(src/image_loaders/local_image)
 add_subdirectory(resources/protos)
 
@@ -75,6 +77,8 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # 子模块
 target_link_libraries(${PROJECT_NAME} 
+  opencv_video_reader_cpu 
+  opencv_video_reader_gpu 
   webcamera_hikvision
   local_image
   image_harmony_data_grpc_proto
