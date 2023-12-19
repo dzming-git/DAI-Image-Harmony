@@ -1,13 +1,13 @@
 /*****************************************************************************
 *  Copyright © 2023 - 2023 dzming.                                           *
 *                                                                            *
-*  @file     local_image_loader.h                                            *
-*  @brief    Local Image Loader                                              *
+*  @file     webcamera_hikvision_sdk.h                                       *
+*  @brief    The Hikvision camera image loader made using HCNetSDK           *
 *  @author   dzming                                                          *
 *  @email    dzm_work@163.com                                                *
 *                                                                            *
 *----------------------------------------------------------------------------*
-*  Remark  :                                                                 *
+*  Remark  :HCNetSDK                                                         *
 *****************************************************************************/
 
 #ifndef _WEBCAMERA_HIKVISION_H_
@@ -16,10 +16,10 @@
 #include "image_loaders/image_loader_base.h"
 #include <unordered_map>
 
-class WebcameraHikvisionLoader : public ImageLoaderBase {
+class HikvisionVideoReader : public ImageLoaderBase {
 public:
-    WebcameraHikvisionLoader();
-    virtual ~WebcameraHikvisionLoader() override;
+    HikvisionVideoReader();
+    virtual ~HikvisionVideoReader() override;
 
     bool setArgument(std::string, std::string) override;
     virtual bool start() override;
@@ -38,26 +38,8 @@ private:
     long userId;
     int nPort;
     long handle;
-    WebcameraHikvisionLoader::VideoBufInfo* videoBufInfo;
+    HikvisionVideoReader::VideoBufInfo* videoBufInfo;
     std::unordered_map<std::string, std::string> args;
-};
-
-class WebcameraHikvisionLoader::VideoBufInfo {
-public:
-    VideoBufInfo();
-    ~VideoBufInfo();
-
-    int h;
-    int w;
-    int bufLen;
-    bool updated;
-    char* bufShallowcopy;
-    int historyMaxSize;  // 内存池最多缓存多少图片
-    char* historyFrameMemoryPool;  // 内存池
-    int historyFrameMemoryPoolUpdateIndex;  // 当前需要写入的位置
-    std::unordered_map<int64_t, char*> history;  // 通过时间戳查询图片指针的哈希表
-    std::queue<int64_t> historyOrder;  // 按照顺序记录时间戳，目的是缓存满时删除最早图片
-    pthread_mutex_t historyLock;
 };
 
 #endif /* _WEBCAMERA_HIKVISION_H_ */

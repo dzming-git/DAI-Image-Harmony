@@ -31,8 +31,8 @@ DAI/集成层/Image Harmony
 
 下载Linux64版本
 
-将两个包中的头文件放在 `./thirdparty/HCNetSDK/include`
+将两个包中的头文件放在 `./src/image_loaders/webcamera_hikvision/HCNetSDK/include`
 
-将两个包中的库文件放在 `./thirdparty/HCNetSDK/lib`
+将两个包中的库文件放在 `./src/image_loaders/webcamera_hikvision/HCNetSDK/lib`
 
-库文件中HCNetSDKCom文件夹也放在 `./thirdparty/HCNetSDK/lib` 不需要将其中文件合并进 `./thirdparty/HCNetSDK/lib`
+库文件中HCNetSDKCom文件夹也放在 `./src/image_loaders/webcamera_hikvision/HCNetSDK/lib` 不需要将其中文件合并进 `./src/image_loaders/webcamera_hikvision/HCNetSDK/lib`

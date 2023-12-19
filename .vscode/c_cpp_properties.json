@@ -8,8 +8,7 @@
                 "/usr/local/include",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/generated",
-                "${workspaceFolder}/",
-                "${workspaceFolder}/thirdparty/HCNetSDK/include"
+                "${workspaceFolder}/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

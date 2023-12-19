@@ -1,27 +1,46 @@
 #include "image_loaders/webcamera_hikvision/webcamera_hikvision.h"
-#include "HCNetSDK.h"
-#include "LinuxPlayM4.h"
+#include "image_loaders/webcamera_hikvision/HCNetSDK/include/HCNetSDK.h"
+#include "image_loaders/webcamera_hikvision/HCNetSDK/include/LinuxPlayM4.h"
 #include <unistd.h>
-#include <chrono>
 #include <iostream>
+#include <thread>
 #include "config/config.h"
+#include "utils/random_utils.h"
 
 #define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+
+class HikvisionVideoReader::VideoBufInfo {
+public:
+    VideoBufInfo();
+    ~VideoBufInfo();
+
+    int h;
+    int w;
+    int bufLen;
+    bool updated;
+    char* bufShallowcopy;
+    int historyMaxSize;  // 内存池最多缓存多少图片
+    char* historyFrameMemoryPool;  // 内存池
+    int historyFrameMemoryPoolUpdateIndex;  // 当前需要写入的位置
+    std::unordered_map<int64_t, char*> history;  // 通过时间戳查询图片指针的哈希表
+    std::queue<int64_t> historyOrder;  // 按照顺序记录时间戳，目的是缓存满时删除最早图片
+    pthread_mutex_t historyLock;
+};
 
 void CALLBACK DecCBFun(int, char* pBuf, int, FRAME_INFO* pFrameInfo, void* videoBufInfo, int) {
     // TODO: 临时用本地生成的时间戳，未来再接入时间同步器
     auto now = std::chrono::system_clock::now();
     auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-    WebcameraHikvisionLoader::VideoBufInfo* info = (WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo;
+    HikvisionVideoReader::VideoBufInfo* info = (HikvisionVideoReader::VideoBufInfo*)videoBufInfo;
     if (T_YV12 == pFrameInfo->nType) {
-        if (nullptr == ((WebcameraHikvisionLoader::VideoBufInfo*)videoBufInfo)->bufShallowcopy) {
+        if (nullptr == ((HikvisionVideoReader::VideoBufInfo*)videoBufInfo)->bufShallowcopy) {
             info->h = pFrameInfo->nHeight;
             info->w = pFrameInfo->nWidth;
             info->bufLen = (pFrameInfo->nHeight + pFrameInfo->nHeight / 2) * pFrameInfo->nWidth;
             info->bufShallowcopy = pBuf;
             info->historyFrameMemoryPool = new char[info->bufLen * info->historyMaxSize];
         }
-        // info->updated = true;
+        info->updated = true;
         // TODO  未考虑使用过程中清晰度改变
         int soloFrameMemoryLen = 3 * info->h * info->w;
 
@@ -53,13 +72,13 @@ void CALLBACK fRealDataCallBack_V30(LONG, DWORD dwDataType, BYTE* pBuffer, DWORD
     PlayM4_InputData(nPort, pBuffer, dwBufSize);
 }
 
-WebcameraHikvisionLoader::WebcameraHikvisionLoader(): 
+HikvisionVideoReader::HikvisionVideoReader(): 
 totalCnt(0), currIdx(0), userId(-1), playOk(false) {
-    std::cout << "Create WebcameraHikvisionLoader" << std::endl;
+    std::cout << "Create HikvisionVideoReader" << std::endl;
     initOk = NET_DVR_Init();
     initOk &= NET_DVR_SetConnectTime(2000, 1);
     initOk &= NET_DVR_SetReconnect(10000, true);
-    videoBufInfo = new WebcameraHikvisionLoader::VideoBufInfo;
+    videoBufInfo = new HikvisionVideoReader::VideoBufInfo;
     videoBufInfo->bufShallowcopy = nullptr;
     
 
@@ -69,8 +88,8 @@ totalCnt(0), currIdx(0), userId(-1), playOk(false) {
     args.emplace("Port", "8000");
 }
 
-WebcameraHikvisionLoader::~WebcameraHikvisionLoader() {
-    std::cout << "Destroy WebcameraHikvisionLoader" << std::endl;
+HikvisionVideoReader::~HikvisionVideoReader() {
+    std::cout << "Destroy HikvisionVideoReader" << std::endl;
     if (videoBufInfo) {
         NET_DVR_StopRealPlay(handle);			//关闭预览
         NET_DVR_Logout(userId);					//注销用户
@@ -79,13 +98,13 @@ WebcameraHikvisionLoader::~WebcameraHikvisionLoader() {
     }
 }
 
-bool WebcameraHikvisionLoader::setArgument(std::string key, std::string value) {
+bool HikvisionVideoReader::setArgument(std::string key, std::string value) {
     if (args.end() == args.find(key)) return false;
     args[key] = value;
     return true;
 }
 
-bool WebcameraHikvisionLoader::start() {
+bool HikvisionVideoReader::start() {
     NET_DVR_USER_LOGIN_INFO pLoginInfo = {0};
     NET_DVR_DEVICEINFO_V40 lpDeviceInfo = {0};
 
@@ -145,19 +164,20 @@ bool WebcameraHikvisionLoader::start() {
             std::cout << PlayM4_GetLastError(nPort) << std::endl;
             return false;  // 回调函数启动失败，返回
         }
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     playOk = true;
     return true;
 }
 
-bool WebcameraHikvisionLoader::hasNext() {
-    return playOk;
-    // return playOk && videoBufInfo->updated;
+bool HikvisionVideoReader::hasNext() {
+    // return playOk;
+    return playOk && videoBufInfo->updated;
 }
 
-ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
-    // videoBufInfo->updated = false;
+ImageInfo HikvisionVideoReader::next(int64_t previousImageId) {
+    videoBufInfo->updated = false;
+    // TODO  previousImageId未实现
     ImageInfo imageInfo;
     if (nullptr == videoBufInfo->bufShallowcopy) {
         return imageInfo;
@@ -177,7 +197,7 @@ ImageInfo WebcameraHikvisionLoader::next(int64_t previousImageId) {
     return imageInfo;
 }
 
-ImageInfo WebcameraHikvisionLoader::getImageById(int64_t imageId) {
+ImageInfo HikvisionVideoReader::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
     cv::Mat imageYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
@@ -186,21 +206,21 @@ ImageInfo WebcameraHikvisionLoader::getImageById(int64_t imageId) {
     return imageInfo;
 }
 
-size_t WebcameraHikvisionLoader::getTotalCount() {
+size_t HikvisionVideoReader::getTotalCount() {
     return totalCnt;
 }
 
-size_t WebcameraHikvisionLoader::getCurrentIndex() {
+size_t HikvisionVideoReader::getCurrentIndex() {
     return currIdx;
 }
 
-WebcameraHikvisionLoader::VideoBufInfo::VideoBufInfo():
+HikvisionVideoReader::VideoBufInfo::VideoBufInfo():
 h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
     auto config = Config::getSingletonInstance();
     historyMaxSize = config->getHistoryMaxSize();
 }
 
-WebcameraHikvisionLoader::VideoBufInfo::~VideoBufInfo() {
+HikvisionVideoReader::VideoBufInfo::~VideoBufInfo() {
     if (historyFrameMemoryPool) {
         delete historyFrameMemoryPool;
     }

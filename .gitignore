@@ -1,6 +1,6 @@
 /bin/*
 !/bin/.config.yml
 /build/
-/thirdparty/
+/src/image_loaders/webcamera_hikvision/HCNetSDK/
 /generated/
 /multimedia_files/

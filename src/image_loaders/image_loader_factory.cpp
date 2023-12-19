@@ -33,7 +33,7 @@ int minDistance(std::string word1, std::string word2) {
 
 std::unordered_map<std::string, ImageLoaderFactory::SourceType> ImageLoaderFactory::sourceTypeMap = {
         {"hikvision", ImageLoaderFactory::SourceType::WebCameraHikvision},
-        {"local image", ImageLoaderFactory::SourceType::LocalImage}
+        {"local image", ImageLoaderFactory::SourceType::LocalImage},
 };
 
 std::string ImageLoaderFactory::getMostSimilarSourceType(std::string typeString) {
@@ -64,7 +64,7 @@ ImageLoaderBase *ImageLoaderFactory::createImageLoader(ImageLoaderFactory::Sourc
     case ImageLoaderFactory::SourceType::LocalImage:
         return new LocalImageLoader();
     case ImageLoaderFactory::SourceType::WebCameraHikvision:
-        return new WebcameraHikvisionLoader();
+        return new HikvisionVideoReader();
     }
     return nullptr;
 }
