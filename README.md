@@ -9,9 +9,9 @@ DAI/集成层/Image Harmony
 ### 多源
 
 - ✅本地图片
-- 本地视频
+- ✅本地视频
 - 网络图片
-- 网络视频
+- ✅网络视频
 - ✅网络摄像头
 - USB摄像头
 - gRPC传入的图片
@@ -20,6 +20,20 @@ DAI/集成层/Image Harmony
 
 - ✅gRPC
 - REST Api
+
+## 环境配置
+
+### 基础环境
+
+[dzming-git/hard_decoding_install_scripts: 一键安装cuda+ffmpeg+opencv硬解码所需环境 (github.com)](https://github.com/dzming-git/hard_decoding_install_scripts)
+
+### 其他环境
+
+```bash
+bash ./scrtpts/install_grpc.sh
+bash ./scrtpts/install_libhv.sh
+bash ./scrtpts/install_yaml-cpp.sh
+```
 
 ## 第三方库安装
 
