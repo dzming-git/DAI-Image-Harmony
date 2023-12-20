@@ -15,7 +15,7 @@ public:
     int h;
     int w;
     int bufLen;
-    bool updated;
+    double fps;
     char* bufShallowcopy;
     int historyMaxSize;  // 内存池最多缓存多少图片
     char* historyFrameMemoryPool;  // 内存池
@@ -48,7 +48,9 @@ bool OpencvVideoReader_CPU::setArgument(std::string key, std::string value) {
 void OpencvVideoReader_CPU::videoReadThreadFunc(OpencvVideoReader_CPU::VideoBufInfo* videoBufInfo, bool* videoReadThreadStop) {
     int frameIndex = 0;
     int frameSize = videoBufInfo->w * videoBufInfo->h * 3;
+    int loopTimeMs = 1000 / videoBufInfo->fps;
     while (!(*videoReadThreadStop)) {
+        auto start = std::chrono::steady_clock::now();
         int64_t imageId = generateInt64Random();
         char* currentFrame = videoBufInfo->historyFrameMemoryPool + (frameIndex * frameSize);
         cv::Mat frame(videoBufInfo->h, videoBufInfo->w, CV_8UC3, currentFrame);
@@ -65,7 +67,13 @@ void OpencvVideoReader_CPU::videoReadThreadFunc(OpencvVideoReader_CPU::VideoBufI
         else {
             continue;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 25));
+        auto end = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        int executionTimeMs = elapsed.count();
+        int delayTimeMs = loopTimeMs - executionTimeMs;
+        if (delayTimeMs > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(delayTimeMs));
+        }
     }
 }
 
@@ -74,6 +82,7 @@ bool OpencvVideoReader_CPU::start() {
     if (videoBufInfo->cap.isOpened()) {
         videoBufInfo->w = videoBufInfo->cap.get(cv::CAP_PROP_FRAME_WIDTH);
         videoBufInfo->h = videoBufInfo->cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        videoBufInfo->fps = videoBufInfo->cap.get(cv::CAP_PROP_FPS);
         videoBufInfo->bufLen = 3 * videoBufInfo->w * videoBufInfo->h;
         videoBufInfo->historyFrameMemoryPool = new char[videoBufInfo->bufLen * videoBufInfo->historyMaxSize];
         videoReadThreadStop = false;
@@ -121,7 +130,7 @@ size_t OpencvVideoReader_CPU::getCurrentIndex() {
 }
 
 OpencvVideoReader_CPU::VideoBufInfo::VideoBufInfo():
-h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
+h(0), w(0), bufLen(0), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
     auto config = Config::getSingletonInstance();
     historyMaxSize = config->getHistoryMaxSize();
 }
