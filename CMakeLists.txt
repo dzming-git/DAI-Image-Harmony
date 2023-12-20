@@ -12,6 +12,8 @@ add_subdirectory(src/image_loaders/webcamera_hikvision)
 add_subdirectory(src/image_loaders/opencv_video_reader/cpu)
 add_subdirectory(src/image_loaders/opencv_video_reader/gpu)
 add_subdirectory(src/image_loaders/local_image)
+add_subdirectory(src/config)
+add_subdirectory(src/consul)
 add_subdirectory(resources/protos)
 
 # 可执行程序的输出目录
@@ -26,12 +28,6 @@ set(GENERATED_OUT_PATH ${PROJECT_SOURCE_DIR}/generated)
 # 查找OpenCV
 find_package(OpenCV REQUIRED)
 
-# libhv
-set(HV_LIBRARY /usr/local/lib/libhv.so)
-
-# yaml-cpp
-set(YAMLCPP_LIBRARY /usr/local/lib/libyaml-cpp.a)
-
 # include
 include_directories(${GENERATED_OUT_PATH})
 include_directories(${PROJECT_SOURCE_DIR}/src)
@@ -39,16 +35,16 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(SOURCES
     main.cpp
-    src/http_server/http_server.h
-    src/http_server/http_server.cpp
-    src/http_server/http_server_builder.h
-    src/http_server/http_server_builder.cpp
-    src/http_server/http_response_handler/http_response_handler_base.h
-    src/http_server/http_response_handler/http_response_handler_base.cpp
-    src/http_server/http_response_handler/http_response_handler_factory.h
-    src/http_server/http_response_handler/http_response_handler_factory.cpp
-    src/http_server/http_response_handler/http_response_handler_test.h
-    src/http_server/http_response_handler/http_response_handler_test.cpp
+    # src/http_server/http_server.h
+    # src/http_server/http_server.cpp
+    # src/http_server/http_server_builder.h
+    # src/http_server/http_server_builder.cpp
+    # src/http_server/http_response_handler/http_response_handler_base.h
+    # src/http_server/http_response_handler/http_response_handler_base.cpp
+    # src/http_server/http_response_handler/http_response_handler_factory.h
+    # src/http_server/http_response_handler/http_response_handler_factory.cpp
+    # src/http_server/http_response_handler/http_response_handler_test.h
+    # src/http_server/http_response_handler/http_response_handler_test.cpp
     src/image_loaders/image_loader_base.h
     src/image_loaders/image_loader_base.cpp
     src/image_loaders/image_loader_factory.h
@@ -63,12 +59,6 @@ set(SOURCES
     src/grpc/servers/image_harmony/image_harmony_server.cpp
     src/grpc/servers/service_coordinator/service_coordinator_server.h
     src/grpc/servers/service_coordinator/service_coordinator_server.cpp
-    src/consul/consul_client.h
-    src/consul/consul_client.cpp
-    src/consul/service_info.h
-    src/consul/service_info.cpp
-    src/config/config.h
-    src/config/config.cpp
     src/utils/random_utils.h
     src/utils/random_utils.cpp
     )
@@ -81,21 +71,12 @@ target_link_libraries(${PROJECT_NAME}
   opencv_video_reader_gpu 
   webcamera_hikvision
   local_image
+  config
+  consul-cpp
   image_harmony_data_grpc_proto
   service_coordinator_data_grpc_proto
   )
 
-# local
-set(LOCAL_INCLUDE_DIRS "/usr/local/include")
-target_include_directories(${PROJECT_NAME} PRIVATE ${HV_INCLUDE_DIRS})
-
 # OpenCV
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
-
-# linhv
-target_link_libraries(${PROJECT_NAME} ${HV_LIBRARY})
-
-# yaml-cpp
-target_link_libraries(${PROJECT_NAME} ${YAMLCPP_LIBRARY})
-

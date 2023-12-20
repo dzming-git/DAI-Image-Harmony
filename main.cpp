@@ -1,17 +1,3 @@
-#if 0
-#include "http_server/http_server.h"
-#include "http_server/http_server_builder.h"
-
-int main() {
-    auto builder = HttpServer::Builder();
-    builder.setHost("0.0.0.0");
-    builder.setPort(5000);
-    auto server = builder.build();
-    server->start();
-}
-
-#else
-
 #include "grpc/servers/grpc_server.h"
 #include "grpc/servers/grpc_server_builder.h"
 #include "grpc/servers/image_harmony/image_harmony_server.h"
@@ -78,5 +64,3 @@ int main(int argc, char** argv) {
     server->start();
     return 0;
 }
-
-#endif
