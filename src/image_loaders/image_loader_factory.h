@@ -15,8 +15,6 @@
 
 #include "image_loaders/image_loader_base.h"
 
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/cudacodec.hpp>
 class ImageLoaderFactory {
 public:
     enum class SourceType {
