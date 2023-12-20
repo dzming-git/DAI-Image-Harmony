@@ -20,7 +20,7 @@ public:
     int h;
     int w;
     int bufLen;
-    bool updated;
+    double fps;
     char* bufShallowcopy;
     int historyMaxSize;  // 内存池最多缓存多少图片
     char* historyFrameMemoryPool;  // 内存池
@@ -53,8 +53,10 @@ bool OpencvVideoReader_GPU::setArgument(std::string key, std::string value) {
 void OpencvVideoReader_GPU::videoReadThreadFunc(OpencvVideoReader_GPU::VideoBufInfo* videoBufInfo, bool* videoReadThreadStop) {
     int frameIndex = 0;
     int frameSize = videoBufInfo->w * videoBufInfo->h * 3;
+    int loopTimeMs = 1000 / videoBufInfo->fps;
     while (!(*videoReadThreadStop)) {
         try {
+            auto start = std::chrono::steady_clock::now();
             int64_t imageId = generateInt64Random();
             cv::cuda::GpuMat frameGPU;
             if (videoBufInfo->cap->nextFrame(frameGPU)) {
@@ -89,7 +91,13 @@ void OpencvVideoReader_GPU::videoReadThreadFunc(OpencvVideoReader_GPU::VideoBufI
             else {
                 continue;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 25));
+            auto end = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            int executionTimeMs = elapsed.count();
+            int delayTimeMs = loopTimeMs - executionTimeMs;
+            if (delayTimeMs > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delayTimeMs));
+            }
         } catch (const std::exception& e) {
             videoBufInfo->cap = cv::cudacodec::createVideoReader(videoBufInfo->url);
             std::cout << e.what() << std::endl;
@@ -99,14 +107,22 @@ void OpencvVideoReader_GPU::videoReadThreadFunc(OpencvVideoReader_GPU::VideoBufI
 
 bool OpencvVideoReader_GPU::start() {
     videoBufInfo->url = args["URL"];
-    videoBufInfo->cap = cv::cudacodec::createVideoReader(videoBufInfo->url);
-    if (videoBufInfo->cap) {
-        videoReadThreadStop = false;
-        std::thread videoReadThread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
-        videoReadThread.detach();
-        return true;
+    // TODO 不知道cuda的VideoReader怎么获取这一参数
+    cv::VideoCapture capTmp(videoBufInfo->url);
+    if (!capTmp.isOpened()) {
+        return false;
     }
-    return false;
+    videoBufInfo->fps = capTmp.get(cv::CAP_PROP_FPS);
+    capTmp.release();
+
+    videoBufInfo->cap = cv::cudacodec::createVideoReader(videoBufInfo->url);
+    if (!videoBufInfo->cap) {
+        return false;
+    }
+    videoReadThreadStop = false;
+    std::thread videoReadThread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
+    videoReadThread.detach();
+    return true;
 }
 
 bool OpencvVideoReader_GPU::hasNext() {
@@ -146,7 +162,7 @@ size_t OpencvVideoReader_GPU::getCurrentIndex() {
 }
 
 OpencvVideoReader_GPU::VideoBufInfo::VideoBufInfo():
-h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
+h(0), w(0), bufLen(0), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
     auto config = Config::getSingletonInstance();
     historyMaxSize = config->getHistoryMaxSize();
 }
