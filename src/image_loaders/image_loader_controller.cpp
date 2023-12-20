@@ -4,6 +4,7 @@
 #include <chrono>
 #include <unordered_map>
 #include "utils/random_utils.h"
+#include "config/config.h"
 
 #define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
@@ -25,7 +26,9 @@ void ImageLoaderController::ConnectionInfo::updateTime() {
     lastRequestTime = std::chrono::steady_clock::now();
 }
 
-ImageLoaderController::ImageLoaderController(): connectionTimeout(10) {
+ImageLoaderController::ImageLoaderController() {
+    auto config = Config::getSingletonInstance();
+    connectionTimeout = config->getImageLoaderTimeout();
 }
 
 void ImageLoaderController::checkConnections() {
@@ -53,8 +56,8 @@ void ImageLoaderController::checkConnections() {
 }
 
 void ImageLoaderController::startCheckConnections() {
-    // checkConnectionsThread = std::thread(&ImageLoaderController::checkConnections, this);
-    // checkConnectionsThread.detach();
+    checkConnectionsThread = std::thread(&ImageLoaderController::checkConnections, this);
+    checkConnectionsThread.detach();
 } 
 
 // 懒汉单例模式

@@ -12,3 +12,4 @@ consul:
 
 settings:
   historyMaxSize: 100
+  imageLoaderTimeout: 120

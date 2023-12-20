@@ -90,6 +90,14 @@ Config::Config() {
         historyMaxSize = 100;
         std::cout << "historyMaxSize (default): " << historyMaxSize << std::endl;
     }
+    if (nodeSettingsDefined && settingsConsul["imageLoaderTimeout"].IsDefined()) {
+        imageLoaderTimeout = settingsConsul["imageLoaderTimeout"].as<int>();
+        std::cout << "imageLoaderTimeout: " << imageLoaderTimeout << std::endl;
+    }
+    else {
+        imageLoaderTimeout = 120;
+        std::cout << "imageLoaderTimeout (default): " << imageLoaderTimeout << std::endl;
+    }
     std::cout << std::endl;
 }
 
@@ -126,4 +134,8 @@ std::string Config::getConsulPort() const {
 
 int Config::getHistoryMaxSize() const {
     return historyMaxSize;
+}
+
+int Config::getImageLoaderTimeout() const {
+    return imageLoaderTimeout;
 }

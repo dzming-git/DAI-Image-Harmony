@@ -33,6 +33,7 @@ public:
 
     // settings
     int getHistoryMaxSize() const;
+    int getImageLoaderTimeout() const;
 
 private:
     Config();
@@ -45,6 +46,7 @@ private:
     std::string consulPort;
 
     int historyMaxSize;
+    int imageLoaderTimeout;
 
     static Config* instance;
     static pthread_mutex_t lock;
