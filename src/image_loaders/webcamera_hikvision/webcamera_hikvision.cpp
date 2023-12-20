@@ -17,7 +17,6 @@ public:
     int h;
     int w;
     int bufLen;
-    bool updated;
     char* bufShallowcopy;
     int historyMaxSize;  // 内存池最多缓存多少图片
     char* historyFrameMemoryPool;  // 内存池
@@ -40,7 +39,6 @@ void CALLBACK DecCBFun(int, char* pBuf, int, FRAME_INFO* pFrameInfo, void* video
             info->bufShallowcopy = pBuf;
             info->historyFrameMemoryPool = new char[info->bufLen * info->historyMaxSize];
         }
-        info->updated = true;
         // TODO  未考虑使用过程中清晰度改变
         int soloFrameMemoryLen = 3 * info->h * info->w;
 
@@ -171,12 +169,10 @@ bool HikvisionVideoReader::start() {
 }
 
 bool HikvisionVideoReader::hasNext() {
-    // return playOk;
-    return playOk && videoBufInfo->updated;
+    return playOk;
 }
 
 ImageInfo HikvisionVideoReader::next(int64_t previousImageId) {
-    videoBufInfo->updated = false;
     // TODO  previousImageId未实现
     ImageInfo imageInfo;
     if (nullptr == videoBufInfo->bufShallowcopy) {
@@ -215,7 +211,7 @@ size_t HikvisionVideoReader::getCurrentIndex() {
 }
 
 HikvisionVideoReader::VideoBufInfo::VideoBufInfo():
-h(0), w(0), bufLen(0), updated(false), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
+h(0), w(0), bufLen(0), bufShallowcopy(nullptr), historyFrameMemoryPool(nullptr), historyFrameMemoryPoolUpdateIndex(0) {
     auto config = Config::getSingletonInstance();
     historyMaxSize = config->getHistoryMaxSize();
 }
