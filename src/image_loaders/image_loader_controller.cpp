@@ -43,7 +43,6 @@ void ImageLoaderController::checkConnections() {
                 continue;
             }
             std::chrono::duration<double> elapsedTime = currentTime - info.lastRequestTime;
-            std::cout << elapsedTime.count() << std::endl;
             if (elapsedTime.count() >= connectionTimeout) {
                 eraseConnectionIds.emplace_back(connectionId);
             }
@@ -166,9 +165,11 @@ bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, 
         }
     }
     connectionId = generateInt64Random();
-    std::cout << "connection ID:" << connectionId << std::endl;
-    std::cout << "loader args hash:" << loaderArgsHash << std::endl;
-    std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
+    std::cout << std::endl
+              << "register image loader"
+              << "connection ID:" << connectionId << std::endl
+              << "loader args hash:" << loaderArgsHash << std::endl
+              << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     // TODO: 未考虑哈希冲突，以后在分布式ID生成器中统一解决
     connectionsMap.emplace(connectionId, ImageLoaderController::ConnectionInfo());
     connectionsMap[connectionId].loaderArgsHash = loaderArgsHash;
@@ -188,7 +189,11 @@ bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
 
     int64_t loaderArgsHash = connectionInfoIt->second.loaderArgsHash;
     --loadersMap[loaderArgsHash].cnt;
-    std::cout << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
+    std::cout << std::endl
+              << "unregister image loader"
+              << "connection ID:" << connectionId << std::endl
+              << "loader args hash:" << loaderArgsHash << std::endl
+              << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     if (loadersMap[loaderArgsHash].cnt <= 0) {
         delete loadersMap[loaderArgsHash].ptr;
         loadersMap.erase(imageLoaderIt);
