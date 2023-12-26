@@ -177,6 +177,7 @@ bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
     LOG("unregisterImageLoader\n");
     auto connectionInfoIt = connectionsMap.find(connectionId);
     if (connectionsMap.end() == connectionInfoIt) return false;
+    connectionsMap.erase(connectionInfoIt);
 
     auto imageLoaderIt = loadersMap.find(connectionInfoIt->second.loaderArgsHash);
     if (loadersMap.end() == imageLoaderIt) return false;
@@ -188,7 +189,6 @@ bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
         delete loadersMap[loaderArgsHash].ptr;
         loadersMap.erase(imageLoaderIt);
     }
-    connectionsMap.erase(connectionInfoIt);
     return true;
 }
 void ImageLoaderController::setConnectionTimeout(int timeout) {
