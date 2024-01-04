@@ -195,6 +195,9 @@ ImageInfo HikvisionVideoReader::next(int64_t previousImageId) {
 
 ImageInfo HikvisionVideoReader::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
+    if (!videoBufInfo->historyOrder.empty() && 0 == imageId) {
+        imageId = videoBufInfo->historyOrder.back();
+    }
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
     cv::Mat imageYUV420(videoBufInfo->h + videoBufInfo->h / 2, videoBufInfo->w, CV_8UC1, historyFrameMemoryPoolOffset);
     cv::cvtColor(imageYUV420, imageInfo.image, cv::COLOR_YUV2BGR_YV12);
