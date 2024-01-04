@@ -166,7 +166,7 @@ bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, 
     }
     connectionId = generateInt64Random();
     std::cout << std::endl
-              << "register image loader"
+              << "register image loader" << std::endl
               << "connection ID:" << connectionId << std::endl
               << "loader args hash:" << loaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
@@ -190,7 +190,7 @@ bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
     int64_t loaderArgsHash = connectionInfoIt->second.loaderArgsHash;
     --loadersMap[loaderArgsHash].cnt;
     std::cout << std::endl
-              << "unregister image loader"
+              << "unregister image loader" << std::endl
               << "connection ID:" << connectionId << std::endl
               << "loader args hash:" << loaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
