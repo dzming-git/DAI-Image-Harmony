@@ -61,6 +61,8 @@ set(SOURCES
     src/grpc/servers/service_coordinator/service_coordinator_server.cpp
     src/utils/random_utils.h
     src/utils/random_utils.cpp
+    src/utils/log.h
+    src/utils/log.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

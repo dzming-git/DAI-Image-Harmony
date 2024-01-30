@@ -6,8 +6,7 @@
 #include <thread>
 #include "config/config.h"
 #include "utils/random_utils.h"
-
-#define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#include "utils/log.h"
 
 class HikvisionVideoReader::VideoBufInfo {
 public:

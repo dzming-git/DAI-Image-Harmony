@@ -10,6 +10,7 @@
 #include <opencv2/cudaarithm.hpp>
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudacodec.hpp>
+#include "utils/log.h"
 
 class OpencvVideoReader_GPU::VideoBufInfo {
 public:
@@ -100,7 +101,7 @@ void OpencvVideoReader_GPU::videoReadThreadFunc(OpencvVideoReader_GPU::VideoBufI
             }
         } catch (const std::exception& e) {
             videoBufInfo->cap = cv::cudacodec::createVideoReader(videoBufInfo->url);
-            std::cout << e.what() << std::endl;
+            std::cout << WHERE << e.what() << std::endl;
         }
     }
 }
@@ -147,6 +148,9 @@ ImageInfo OpencvVideoReader_GPU::next(int64_t previousImageId) {
 
 ImageInfo OpencvVideoReader_GPU::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
+    if (!videoBufInfo->historyOrder.empty() && 0 == imageId) {
+        imageId = videoBufInfo->historyOrder.back();
+    }
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
     imageInfo.image = cv::Mat(videoBufInfo->h, videoBufInfo->w, CV_8UC3, historyFrameMemoryPoolOffset);
     imageInfo.imageId = imageId;

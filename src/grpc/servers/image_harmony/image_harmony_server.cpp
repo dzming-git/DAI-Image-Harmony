@@ -4,6 +4,7 @@
 #include <chrono>
 #include <random>
 #include <vector>
+#include "utils/log.h"
 
 ImageHarmonyServer::ImageHarmonyServer() {
 }
@@ -48,6 +49,7 @@ grpc::Status ImageHarmonyServer::registerImageTransService(grpc::ServerContext*,
         }
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
 
@@ -67,6 +69,7 @@ grpc::Status ImageHarmonyServer::unregisterImageTransService(grpc::ServerContext
         }
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
     response->mutable_response()->set_code(responseCode);
@@ -132,6 +135,7 @@ grpc::Status ImageHarmonyServer::getImageByImageId(grpc::ServerContext *context,
         }
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
     response->mutable_response()->set_code(responseCode);
@@ -202,6 +206,7 @@ grpc::Status ImageHarmonyServer::getNextImageByImageId(grpc::ServerContext *cont
         }
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
     response->mutable_response()->set_code(responseCode);

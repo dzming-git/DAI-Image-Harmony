@@ -26,6 +26,8 @@ public:
 
     virtual grpc::Status informPreviousServiceInfo(grpc::ServerContext*, const serviceCoordinator::InformPreviousServiceInfoRequest*, serviceCoordinator::InformPreviousServiceInfoResponse*) override;
     virtual grpc::Status informCurrentServiceInfo(grpc::ServerContext*, const serviceCoordinator::InformCurrentServiceInfoRequest*, serviceCoordinator::InformCurrentServiceInfoResponse*) override;
+    virtual grpc::Status start(grpc::ServerContext*, const serviceCoordinator::StartRequest*, serviceCoordinator::StartResponse*) override;
+    virtual grpc::Status stop(grpc::ServerContext*, const serviceCoordinator::StopRequest*, serviceCoordinator::StopResponse*) override;
 private:
 };
 

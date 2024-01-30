@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include "utils/random_utils.h"
 #include "config/config.h"
-
-#define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#include "utils/log.h"
 
 std::int64_t hashArgs(int type, const std::unordered_map<std::string, std::string>& args, std::size_t seed = 0) {
     auto hashString = [&seed](const std::string& str) {
@@ -56,8 +55,8 @@ void ImageLoaderController::checkConnections() {
 }
 
 void ImageLoaderController::startCheckConnections() {
-    checkConnectionsThread = std::thread(&ImageLoaderController::checkConnections, this);
-    checkConnectionsThread.detach();
+    // checkConnectionsThread = std::thread(&ImageLoaderController::checkConnections, this);
+    // checkConnectionsThread.detach();
 } 
 
 // 懒汉单例模式

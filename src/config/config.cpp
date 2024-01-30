@@ -1,8 +1,7 @@
 #include "config/config.h"
 #include "yaml-cpp/yaml.h"
+#include "utils/log.h"
 #include <iostream>
-
-#define LOG(fmt, ...) printf("[%s : %d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
 Config* Config::instance = nullptr;
 pthread_mutex_t Config::lock;

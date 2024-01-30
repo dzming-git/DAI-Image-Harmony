@@ -4,6 +4,7 @@
 #include <chrono>
 #include <random>
 #include <unordered_map>
+#include "utils/log.h"
 
 ServiceCoordinatorServer::ServiceCoordinatorServer() {
 }
@@ -18,6 +19,7 @@ grpc::Status ServiceCoordinatorServer::informPreviousServiceInfo(grpc::ServerCon
         throw std::runtime_error("The current version of this service does not have a front-end service.\n");
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
     response->mutable_response()->set_code(responseCode);
@@ -73,6 +75,39 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         response->add_args()->CopyFrom(argument);
     } catch (const std::exception& e) {
         responseCode = 400;
+        responseMessage += WHERE;
+        responseMessage += e.what();
+    }
+
+    response->mutable_response()->set_code(responseCode);
+    response->mutable_response()->set_message(responseMessage);
+    return grpc::Status::OK;
+}
+
+grpc::Status ServiceCoordinatorServer::start(grpc::ServerContext*, const serviceCoordinator::StartRequest *request, serviceCoordinator::StartResponse *response) {
+    int32_t responseCode = 200;
+    std::string responseMessage;
+    try {
+        
+    } catch (const std::exception& e) {
+        responseCode = 400;
+        responseMessage += WHERE;
+        responseMessage += e.what();
+    }
+
+    response->mutable_response()->set_code(responseCode);
+    response->mutable_response()->set_message(responseMessage);
+    return grpc::Status::OK;
+}
+
+grpc::Status ServiceCoordinatorServer::stop(grpc::ServerContext*, const serviceCoordinator::StopRequest *request, serviceCoordinator::StopResponse *response) {
+    int32_t responseCode = 200;
+    std::string responseMessage;
+    try {
+        
+    } catch (const std::exception& e) {
+        responseCode = 400;
+        responseMessage += WHERE;
         responseMessage += e.what();
     }
 

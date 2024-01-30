@@ -115,6 +115,9 @@ ImageInfo OpencvVideoReader_CPU::next(int64_t previousImageId) {
 
 ImageInfo OpencvVideoReader_CPU::getImageById(int64_t imageId) {
     ImageInfo imageInfo;
+    if (!videoBufInfo->historyOrder.empty() && 0 == imageId) {
+        imageId = videoBufInfo->historyOrder.back();
+    }
     char* historyFrameMemoryPoolOffset = videoBufInfo->history[imageId];
     imageInfo.image = cv::Mat(videoBufInfo->h, videoBufInfo->w, CV_8UC3, historyFrameMemoryPoolOffset);
     imageInfo.imageId = imageId;
