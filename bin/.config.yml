@@ -5,9 +5,11 @@ service:
     - interface:gRPC
     - support:hikvision
     - support:local image
+    - support:opencv video reader(cpu)
+    - support:opencv video reader(gpu)
 
 consul:
-  ip: 10.0.0.2
+  ip: 10.10.10.2
   port: 8500
 
 settings:
