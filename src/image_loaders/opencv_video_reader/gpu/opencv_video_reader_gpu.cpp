@@ -39,6 +39,14 @@ OpencvVideoReader_GPU::OpencvVideoReader_GPU(): totalCnt(0), currIdx(0) {
 
 OpencvVideoReader_GPU::~OpencvVideoReader_GPU() {
     std::cout << "Destroy OpencvVideoReader_GPU" << std::endl;
+    {
+        std::lock_guard<std::mutex> lk(mtx);
+        videoReadThreadStop = true;
+    }
+    cv.notify_one();
+    if (videoReadThread.joinable()) {
+        videoReadThread.join();  // 等待线程结束
+    }
     videoReadThreadStop = true;
     if (videoBufInfo) {
         delete videoBufInfo;
@@ -121,8 +129,7 @@ bool OpencvVideoReader_GPU::start() {
         return false;
     }
     videoReadThreadStop = false;
-    std::thread videoReadThread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
-    videoReadThread.detach();
+    videoReadThread = std::thread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
     return true;
 }
 

@@ -15,6 +15,10 @@
 
 #include "image_loaders/image_loader_base.h"
 #include <unordered_map>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 
 class OpencvVideoReader_GPU : public ImageLoaderBase {
 public:
@@ -37,7 +41,10 @@ private:
     std::unordered_map<std::string, std::string> args;
 
     static void videoReadThreadFunc(OpencvVideoReader_GPU::VideoBufInfo* videoBufInfo, bool* videoReadThreadStop);
-    bool videoReadThreadStop;
+    bool videoReadThreadStop;    
+    std::thread videoReadThread;
+    std::mutex mtx;
+    std::condition_variable cv;
 };
 
 #endif /* _WEBCAMERA_HIKVISION_OPENCV_GPU_H_ */

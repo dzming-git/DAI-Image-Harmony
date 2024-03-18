@@ -34,6 +34,14 @@ OpencvVideoReader_CPU::OpencvVideoReader_CPU(): totalCnt(0), currIdx(0) {
 OpencvVideoReader_CPU::~OpencvVideoReader_CPU() {
     std::cout << "Destroy OpencvVideoReader_CPU" << std::endl;
     videoReadThreadStop = true;
+    {
+        std::lock_guard<std::mutex> lk(mtx);
+        videoReadThreadStop = true;
+    }
+    cv.notify_one();
+    if (videoReadThread.joinable()) {
+        videoReadThread.join();  // 等待线程结束
+    }
     if (videoBufInfo) {
         delete videoBufInfo;
     }
@@ -86,8 +94,7 @@ bool OpencvVideoReader_CPU::start() {
         videoBufInfo->bufLen = 3 * videoBufInfo->w * videoBufInfo->h;
         videoBufInfo->historyFrameMemoryPool = new char[videoBufInfo->bufLen * videoBufInfo->historyMaxSize];
         videoReadThreadStop = false;
-        std::thread videoReadThread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
-        videoReadThread.detach();
+        videoReadThread = std::thread(videoReadThreadFunc, videoBufInfo, &videoReadThreadStop);
         return true;
     }
     return false;
