@@ -41,7 +41,7 @@ grpc::Status ImageHarmonyServer::registerImageTransService(grpc::ServerContext*,
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         int64_t connectId = 0;
-        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId, isUnique);
+        bool ok = imageLoaderController->registerImageLoader(loaderArgsHash, connectId);
         response->set_loaderargshash(loaderArgsHash);
         response->set_connectid(connectId);
         if (!ok) {

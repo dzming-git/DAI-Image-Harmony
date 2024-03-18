@@ -61,15 +61,11 @@ grpc::Status ServiceCoordinatorServer::informCurrentServiceInfo(grpc::ServerCont
         }
         auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         int64_t loaderArgsHash = 0;
-        int64_t connectId = 0;
-        bool ok = imageLoaderController->registerImageLoader(args, sourceType, loaderArgsHash, connectId, isUnique);
+        bool ok = imageLoaderController->initImageLoader(args, sourceType, isUnique, loaderArgsHash);
         if (!ok) {
             throw std::runtime_error("Register image loader failed.\n");
         }
         serviceCoordinator::Argument argument;
-        argument.set_key("ConnectID");
-        argument.set_value(std::to_string(connectId));
-        response->add_args()->CopyFrom(argument);
         argument.set_key("LoaderArgsHash");
         argument.set_value(std::to_string(loaderArgsHash));
         response->add_args()->CopyFrom(argument);

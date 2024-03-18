@@ -101,20 +101,25 @@ bool ImageLoaderController::stopUsingLoader(int64_t connectionId) {
     return true;
 }
 
-bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type, int64_t &loaderArgsHash, int64_t &connectionId, bool isUnique) {
-    LOG("registerImageLoader\n");
+bool ImageLoaderController::initImageLoader(std::unordered_map<std::string, std::string> args, ImageLoaderFactory::SourceType type, bool isUnique, int64_t &outLoaderArgsHash) {
+    LOG("initImageLoader\n");
     
     // TODO: 暂时粗暴地解决线程安全问题
     static pthread_mutex_t registerImageLoaderLock;
     pthread_mutex_lock(&registerImageLoaderLock);
     // 用hash值查找已建立的加载器
-    if (0 != loaderArgsHash) {
-        auto imageLoaderIt = loadersMap.find(loaderArgsHash);
+    if (0 != outLoaderArgsHash) {
+        auto imageLoaderIt = loadersMap.find(outLoaderArgsHash);
         // 没有找到，直接返回错误
         if (loadersMap.end() == imageLoaderIt) {
+            pthread_mutex_unlock(&registerImageLoaderLock);
             return false;
         }
-        ++loadersMap[loaderArgsHash].cnt;
+        // 重复初始化 跳过
+        else {
+            pthread_mutex_unlock(&registerImageLoaderLock);
+            return true;
+        }
     }
     else {
         std::cout << "type: " << static_cast<int>(type) << std::endl;
@@ -123,17 +128,18 @@ bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, 
             std::cout << "  " << arg.first << ": " << arg.second << std::endl;
         }
         // TODO: 未考虑哈希冲突
-        loaderArgsHash = hashArgs(static_cast<int>(type), args);
-        auto imageLoaderIt = loadersMap.find(loaderArgsHash);
+        outLoaderArgsHash = hashArgs(static_cast<int>(type), args);
+        auto imageLoaderIt = loadersMap.find(outLoaderArgsHash);
         bool needCreate = false;
         // 没有这个源的信息，新建
         if (loadersMap.end() == imageLoaderIt) {
             std::cout << "not found, creat" << std::endl;
             needCreate = true;
         }
-        // 有这个源的信息，且不是独占，数量+1
+        // 有这个源的信息，且不是独占
         else if (!isUnique) {
-            ++loadersMap[loaderArgsHash].cnt;
+            pthread_mutex_unlock(&registerImageLoaderLock);
+            return true;
         }
         // 有这个源的信息，且是独占，新建
         else {
@@ -142,37 +148,59 @@ bool ImageLoaderController::registerImageLoader(std::unordered_map<std::string, 
             do {
                 auto current = std::chrono::system_clock::now().time_since_epoch();
                 auto seed = static_cast<size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(current).count());
-                loaderArgsHash = hashArgs(static_cast<int>(type), args, seed);
-            } while (loadersMap.find(loaderArgsHash) != loadersMap.end());
+                outLoaderArgsHash = hashArgs(static_cast<int>(type), args, seed);
+            } while (loadersMap.find(outLoaderArgsHash) != loadersMap.end());
             needCreate = true;
         }
         if (needCreate) {
-            loadersMap.emplace(loaderArgsHash, ImageLoaderController::ImageLoaderInfo());
-            loadersMap[loaderArgsHash].ptr = ImageLoaderFactory::createImageLoader(type);
+            loadersMap.emplace(outLoaderArgsHash, ImageLoaderController::ImageLoaderInfo());
+            loadersMap[outLoaderArgsHash].ptr = ImageLoaderFactory::createImageLoader(type);
             for (auto arg: args) {
-                loadersMap[loaderArgsHash].ptr->setArgument(arg.first, arg.second);
+                loadersMap[outLoaderArgsHash].ptr->setArgument(arg.first, arg.second);
             }
-            if (loadersMap[loaderArgsHash].ptr->start()) {
-                loadersMap[loaderArgsHash].cnt = 1;
-            }
-            else {
-                delete loadersMap[loaderArgsHash].ptr;
-                loadersMap.erase(loaderArgsHash);
+            if (!loadersMap[outLoaderArgsHash].ptr->start()) {
+                delete loadersMap[outLoaderArgsHash].ptr;
+                loadersMap.erase(outLoaderArgsHash);
                 std::cout << "image loader start failed" << std::endl;
                 return false;
             }
         }
     }
-    connectionId = generateInt64Random();
+    std::cout << std::endl
+              << "init image loader" << std::endl
+              << "loader args hash:" << outLoaderArgsHash << std::endl
+              << "connect cnt:" << loadersMap[outLoaderArgsHash].cnt << std::endl;
+    pthread_mutex_unlock(&registerImageLoaderLock);
+    return true;
+}
+
+bool ImageLoaderController::registerImageLoader(int64_t loaderArgsHash, int64_t &outConnectionId) {
+    LOG("registerImageLoader\n");
+    
+    // TODO: 暂时粗暴地解决线程安全问题
+    static pthread_mutex_t registerImageLoaderLock;
+    pthread_mutex_lock(&registerImageLoaderLock);
+    // 用hash值查找已建立的加载器
+    if (0 == loaderArgsHash) {
+        return false;
+    }
+    auto imageLoaderIt = loadersMap.find(loaderArgsHash);
+    // 没有找到，直接返回错误
+    if (loadersMap.end() == imageLoaderIt) {
+        return false;
+    }
+    ++loadersMap[loaderArgsHash].cnt;
+
+    outConnectionId = generateInt64Random();
     std::cout << std::endl
               << "register image loader" << std::endl
-              << "connection ID:" << connectionId << std::endl
+              << "connection ID:" << outConnectionId << std::endl
               << "loader args hash:" << loaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
     // TODO: 未考虑哈希冲突，以后在分布式ID生成器中统一解决
-    connectionsMap.emplace(connectionId, ImageLoaderController::ConnectionInfo());
-    connectionsMap[connectionId].loaderArgsHash = loaderArgsHash;
-    connectionsMap[connectionId].updateTime();
+    connectionsMap.emplace(outConnectionId, ImageLoaderController::ConnectionInfo());
+    connectionsMap[outConnectionId].loaderArgsHash = loaderArgsHash;
+    connectionsMap[outConnectionId].updateTime();
     pthread_mutex_unlock(&registerImageLoaderLock);
     return true;
 }
