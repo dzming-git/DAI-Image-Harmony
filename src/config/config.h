@@ -13,43 +13,49 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#include <mutex>
+#include "config.h"
+#include "yaml-cpp/yaml.h"
+#include "utils/log.h"
+#include <iostream>
+#include <string>
 #include <vector>
+#include <mutex>
 
 const std::string CONFIG_PATH = "./.config.yml";
 
 class Config {
 public:
+    struct ServiceConfig {
+        std::string name;
+        std::string type;
+        int port;
+        std::vector<std::string> tags;
+    };
+
     static Config* getSingletonInstance();
 
-    // service
-    std::string getServiceName() const;
-    std::string getServicePort() const;
-    std::vector<std::string> getServiceTags() const;
+    // Services
+    std::vector<ServiceConfig> getServices() const;
 
-    // consul
+    // Consul
     std::string getConsulIp() const;
-    std::string getConsulPort() const;
+    int getConsulPort() const;
 
-    // settings
+    // Settings
     int getHistoryMaxSize() const;
     int getImageLoaderTimeout() const;
 
 private:
     Config();
 
-    std::string serviceName;
-    std::string servicePort;
-    std::vector<std::string> serviceTags;
-
+    std::vector<ServiceConfig> services;
     std::string consulIp;
-    std::string consulPort;
-
+    int consulPort;
     int historyMaxSize;
     int imageLoaderTimeout;
 
     static Config* instance;
-    static pthread_mutex_t lock;
+    static std::mutex lock;
 };
 
 #endif /* _CONFIG_H_ */

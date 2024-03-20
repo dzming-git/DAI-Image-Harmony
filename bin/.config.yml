@@ -1,12 +1,22 @@
-service:
-  name: image harmony
-  port: 5000
-  tags: 
-    - interface:gRPC
-    - support:hikvision
-    - support:local image
-    - support:opencv video reader(cpu)
-    - support:opencv video reader(gpu)
+services:
+  - name: image harmony gRPC
+    type: gRPC
+    port: 5000
+    tags: 
+      - interface:gRPC
+      - support:hikvision
+      - support:local image
+      - support:opencv video reader(cpu)
+      - support:opencv video reader(gpu)
+  - name: image harmony HTTP
+    type: HTTP
+    port: 8080
+    tags:
+      - interface:REST
+      - support:hikvision
+      - support:local image
+      - support:opencv video reader(cpu)
+      - support:opencv video reader(gpu)
 
 consul:
   ip: 10.10.10.2

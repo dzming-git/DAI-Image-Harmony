@@ -1,5 +1,7 @@
 #include "grpc/servers/grpc_server.h"
 #include "grpc/servers/grpc_server_builder.h"
+#include "http_server/http_server.h"
+#include "http_server/http_server_builder.h"
 #include "grpc/servers/image_harmony/image_harmony_server.h"
 #include "grpc/servers/service_coordinator/service_coordinator_server.h"
 #include "consul/consul_client.h"
@@ -9,6 +11,7 @@
 #include <ifaddrs.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <thread>
 
 std::string getPrivateIpLinux() {
     int ret = 0;
@@ -41,26 +44,62 @@ int main(int argc, char** argv) {
     consul
         .setConsulIp(config->getConsulIp())
         .setConsulPort(config->getConsulPort());
-    ServiceInfo serviceInfo;
+    
     std::string host = getPrivateIpLinux();
-    std::string serviceName = config->getServiceName();
-    std::string servicePort = config->getServicePort();
-    serviceInfo
-        .setServiceIp(host)
-        .setServicePort(servicePort)
-        .setServiceId(serviceName + "-" + host + ":" + servicePort)
-        .setServiceName(serviceName)
-        .setServiceTags(config->getServiceTags());
-    consul.registerService(serviceInfo);
-    GRPCServer::GRPCServerBuilder builder;
+
+    auto services = config->getServices();
+    int grpcPort = 0;
+    int httpPort = 0;
+    for (const auto& service : services) {
+        ServiceInfo serviceInfo;
+        serviceInfo
+            .setServiceIp(host)
+            .setServicePort(service.port)
+            .setServiceId(service.name + "-" + service.type + "-" + host + ":" + std::to_string(service.port))
+            .setServiceName(service.name)
+            .setServiceTags(service.tags);
+        consul.registerService(serviceInfo);
+        if (service.type == "gRPC") {
+            grpcPort = service.port;
+        } else if (service.type == "HTTP") {
+            httpPort = service.port;
+        }
+    }
+
+    // grpc
+    GRPCServer::GRPCServerBuilder grpcServerBuilder;
     ImageHarmonyServer imageHarmonyService;
     ServiceCoordinatorServer taskCoordinateService;
-    builder.setHost("0.0.0.0")
-           .setEpollCount(4, 8)
-           .setMaxSendBytes(1024 * 1024 * 1024)
-           .addService(&imageHarmonyService)
-           .addService(&taskCoordinateService);
-    auto server = builder.build();
-    server->start();
+    grpcServerBuilder
+        .setHost("0.0.0.0")
+        .setPort(grpcPort)
+        .setEpollCount(4, 8)
+        .setMaxSendBytes(1024 * 1024 * 1024)
+        .addService(&imageHarmonyService)
+        .addService(&taskCoordinateService);
+    auto grpcServer = grpcServerBuilder.build();
+    grpcServer->start();
+
+    // http
+    HttpServer::Builder httpServerBuilder;
+    httpServerBuilder
+        .setHost("0.0.0.0")
+        .setPort(httpPort);
+    auto httpServer = httpServerBuilder.build();
+    httpServer->start();
+    std::thread grpcThread([=]() {
+        grpcServer->start();
+    });
+
+    std::thread httpThread([=]() {
+        httpServer->start();
+    });
+    // 等待服务线程完成
+    if (grpcThread.joinable()) {
+        grpcThread.join();
+    }
+    if (httpThread.joinable()) {
+        httpThread.join();
+    }
     return 0;
 }
