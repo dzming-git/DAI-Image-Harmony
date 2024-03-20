@@ -25,6 +25,8 @@ HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), 
 
     // route
     router.GET("/video", [](const HttpRequestPtr& req, const HttpResponseWriterPtr& writer) {
+        int64_t connectionId = 0;
+        auto imageLoaderController = ImageLoaderController::getSingletonInstance();
         try {
             std::string sourceTypeStr = "";
             bool isUnique = false;
@@ -57,13 +59,11 @@ HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), 
                 sourceType = sourceTypeIt->second;
             }
 
-            auto imageLoaderController = ImageLoaderController::getSingletonInstance();
             int64_t loaderArgsHash = 0;
             bool ok = imageLoaderController->initImageLoader(args, sourceType, isUnique, loaderArgsHash);
             if (!ok) {
                 throw std::runtime_error("Failed to init image loader.\n");
             }
-            int64_t connectionId = 0;
             ok = imageLoaderController->connectImageLoader(loaderArgsHash, connectionId);
             auto loader = imageLoaderController->getImageLoader(connectionId);
             const int targetSize = 200 * 1024;  // 目标大小200KB
@@ -111,6 +111,7 @@ HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), 
             writer->WriteStatus(HTTP_STATUS_OK);
             writer->End();
         }
+        imageLoaderController->disconnectImageLoader(connectionId);
     });
 
     server.setHost(host.c_str());
