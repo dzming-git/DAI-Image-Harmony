@@ -78,7 +78,6 @@ int main(int argc, char** argv) {
         .addService(&imageHarmonyService)
         .addService(&taskCoordinateService);
     auto grpcServer = grpcServerBuilder.build();
-    grpcServer->start();
 
     // http
     HttpServer::Builder httpServerBuilder;
@@ -86,7 +85,7 @@ int main(int argc, char** argv) {
         .setHost("0.0.0.0")
         .setPort(httpPort);
     auto httpServer = httpServerBuilder.build();
-    httpServer->start();
+    
     std::thread grpcThread([=]() {
         grpcServer->start();
     });
