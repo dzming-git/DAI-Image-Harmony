@@ -25,9 +25,9 @@ public:
     ImageHarmonyServer();
     virtual ~ImageHarmonyServer();
 
-    virtual grpc::Status initImageTransService(grpc::ServerContext*, const imageHarmony::InitImageTransServiceRequest*, imageHarmony::InitImageTransServiceResponse*) override;
-    virtual grpc::Status connectImageTransService(grpc::ServerContext*, const imageHarmony::ConnectImageTransServiceRequest*, imageHarmony::ConnectImageTransServiceResponse*) override;
-    virtual grpc::Status disconnectImageTransService(grpc::ServerContext*, const imageHarmony::DisconnectImageTransServiceRequest*, imageHarmony::DisconnectImageTransServiceResponse*) override;
+    virtual grpc::Status initImageLoader(grpc::ServerContext*, const imageHarmony::InitImageLoaderRequest*, imageHarmony::InitImageLoaderResponse*) override;
+    virtual grpc::Status connectImageLoader(grpc::ServerContext*, const imageHarmony::ConnectImageLoaderRequest*, imageHarmony::ConnectImageLoaderResponse*) override;
+    virtual grpc::Status disconnectImageLoader(grpc::ServerContext*, const imageHarmony::DisconnectImageLoaderRequest*, imageHarmony::DisconnectImageLoaderResponse*) override;
     virtual grpc::Status getImageByImageId(grpc::ServerContext*, const imageHarmony::GetImageByImageIdRequest*, imageHarmony::GetImageByImageIdResponse*) override;
     virtual grpc::Status getNextImageByImageId(grpc::ServerContext*, const imageHarmony::GetNextImageByImageIdRequest*, imageHarmony::GetNextImageByImageIdResponse*) override;
 private:

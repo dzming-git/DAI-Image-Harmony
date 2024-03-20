@@ -12,7 +12,7 @@ ImageHarmonyServer::ImageHarmonyServer() {
 ImageHarmonyServer::~ImageHarmonyServer() {
 }
 
-grpc::Status ImageHarmonyServer::initImageTransService(grpc::ServerContext*, const imageHarmony::InitImageTransServiceRequest *request, imageHarmony::InitImageTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::initImageLoader(grpc::ServerContext*, const imageHarmony::InitImageLoaderRequest *request, imageHarmony::InitImageLoaderResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     try {
@@ -55,7 +55,7 @@ grpc::Status ImageHarmonyServer::initImageTransService(grpc::ServerContext*, con
     return grpc::Status::OK;
 }
 
-grpc::Status ImageHarmonyServer::connectImageTransService(grpc::ServerContext*, const imageHarmony::ConnectImageTransServiceRequest *request, imageHarmony::ConnectImageTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::connectImageLoader(grpc::ServerContext*, const imageHarmony::ConnectImageLoaderRequest *request, imageHarmony::ConnectImageLoaderResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     try {
@@ -79,7 +79,7 @@ grpc::Status ImageHarmonyServer::connectImageTransService(grpc::ServerContext*, 
     return grpc::Status::OK;
 }
 
-grpc::Status ImageHarmonyServer::disconnectImageTransService(grpc::ServerContext *context, const imageHarmony::DisconnectImageTransServiceRequest *request, imageHarmony::DisconnectImageTransServiceResponse *response) {
+grpc::Status ImageHarmonyServer::disconnectImageLoader(grpc::ServerContext *context, const imageHarmony::DisconnectImageLoaderRequest *request, imageHarmony::DisconnectImageLoaderResponse *response) {
     int32_t responseCode = 200;
     std::string responseMessage;
     try {
