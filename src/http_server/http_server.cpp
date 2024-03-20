@@ -75,7 +75,7 @@ HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), 
                 auto imageInfo = loader->getImageById(0);
                 cv::Mat image = imageInfo.image;
                 std::vector<uchar> buf;
-                if (image.empty()) break;
+                if (image.empty()) continue;
 
                 // 动态调整压缩率
                 do {
@@ -95,6 +95,8 @@ HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), 
                 if (!cv::imencode(".jpg", image, buf, params)) {
                     throw std::runtime_error("Failed to encode image.\n");
                 }
+
+                if (buf.empty()) continue;
 
                 // 构建MJPEG帧的HTTP响应
                 std::string header = "--frame\r\nContent-Type: image/jpeg\r\n\r\n";
