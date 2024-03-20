@@ -20,8 +20,8 @@ public:
     Builder();
     std::string getHost();
     uint16_t getPort();
-    void setHost(std::string host);
-    void setPort(uint16_t port);
+    HttpServer::Builder& setHost(std::string host);
+    HttpServer::Builder& setPort(uint16_t port);
     HttpServer* build();
 private:
     std::string host;

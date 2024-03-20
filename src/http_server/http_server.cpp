@@ -1,11 +1,13 @@
 #include "http_server/http_server.h"
 #include "http_server/http_server_builder.h"
+#include "image_loaders/image_loader_factory.h"
+#include "image_loaders/image_loader_controller.h"
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include "http_server/http_response_handler/http_response_handler_base.h"
-#include "http_server/http_response_handler/http_response_handler_factory.h"
+#include "hv/hthread.h"
+#include "hv/hasync.h"
+#include "hv/hlog.h"
+#include "hv/HttpContext.h"
 
 std::string HttpServer::getHost() {
     return host;
@@ -15,69 +17,114 @@ uint16_t HttpServer::getPort() {
     return port;
 }
 
+HttpServer::~HttpServer() {
+}
 
-inline std::string parseUrl(const std::string& request) {
-    std::string url;
-    size_t start = request.find("GET ") + 4;
-    size_t end = request.find(" HTTP/1");
+HttpServer::HttpServer(HttpServer::Builder *builder): host(builder->getHost()), port(builder->getPort()) {
+    // HV_MEMCHECK;
 
-    if (start != std::string::npos && end != std::string::npos) {
-        url = request.substr(start, end - start);
-    }
+    // route
+    router.GET("/video", [](const HttpRequestPtr& req, const HttpResponseWriterPtr& writer) {
+        try {
+            std::string sourceTypeStr = "";
+            bool isUnique = false;
+            std::unordered_map<std::string, std::string> args;
+            auto params = req->query_params;
+            for (auto param : params) {
+                std::string key = param.first;
+                std::string value = param.second;
+                if ("source_type" == key) {
+                    sourceTypeStr = value;
+                }
+                else if ("is_unique" == key) {
+                    isUnique = value != "0";
+                }
+                else {
+                    args.emplace(key, value);
+                }
+            }
+            if ("" == sourceTypeStr) {
+                throw std::runtime_error("source_type not set.\n");
+            }
+            ImageLoaderFactory::SourceType sourceType;
+            auto sourceTypeIt = ImageLoaderFactory::sourceTypeMap.find(sourceTypeStr);
+            if (ImageLoaderFactory::sourceTypeMap.end() == sourceTypeIt) {
+                // 匹配不到，用编辑距离智能匹配
+                std::string mostSimilarType = ImageLoaderFactory::getMostSimilarSourceType(sourceTypeStr);
+                sourceType = ImageLoaderFactory::sourceTypeMap[mostSimilarType];
+            }
+            else {
+                sourceType = sourceTypeIt->second;
+            }
 
-    return url;
+            auto imageLoaderController = ImageLoaderController::getSingletonInstance();
+            int64_t loaderArgsHash = 0;
+            bool ok = imageLoaderController->initImageLoader(args, sourceType, isUnique, loaderArgsHash);
+            if (!ok) {
+                throw std::runtime_error("Failed to init image loader.\n");
+            }
+            int64_t connectionId = 0;
+            ok = imageLoaderController->connectImageLoader(loaderArgsHash, connectionId);
+            auto loader = imageLoaderController->getImageLoader(connectionId);
+            const int targetSize = 200 * 1024;  // 目标大小200KB
+            int quality = 90; // 初始压缩率
+            const int minQuality = 30; // 最小压缩率
+            const int step = 10; // 压缩率调整步长
+            while (loader->hasNext() && writer->isConnected()) {
+                writer->WriteHeader("Content-Type", "multipart/x-mixed-replace; boundary=frame");
+                auto imageInfo = loader->getImageById(0);
+                cv::Mat image = imageInfo.image;
+                std::vector<uchar> buf;
+                if (image.empty()) break;
+
+                // 动态调整压缩率
+                do {
+                    std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, quality};
+                    if (!cv::imencode(".jpg", image, buf, params)) {
+                        throw std::runtime_error("Failed to encode image.\n");
+                    }
+                    
+                    if (buf.size() <= targetSize || quality == minQuality) {
+                        break; // 如果满足大小要求或已达到最小压缩率，则退出循环
+                    }
+                    
+                    quality -= step; // 降低压缩率
+                } while (quality >= minQuality);
+
+                std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 50};
+                if (!cv::imencode(".jpg", image, buf, params)) {
+                    throw std::runtime_error("Failed to encode image.\n");
+                }
+
+                // 构建MJPEG帧的HTTP响应
+                std::string header = "--frame\r\nContent-Type: image/jpeg\r\n\r\n";
+                std::string footer = "\r\n";
+                std::string content(header);
+                content.append(reinterpret_cast<char*>(buf.data()), buf.size());
+                content += footer;
+
+                // 使用异步writer发送帧
+                writer->write(content.data(), content.size());
+            }
+        } catch (const std::exception& e) {
+            writer->WriteBody(e.what());
+            writer->WriteStatus(HTTP_STATUS_OK);
+            writer->End();
+        }
+    });
+
+    server.setHost(host.c_str());
+    server.setPort(port);
+    server.registerHttpService(&router);
 }
 
 void HttpServer::start() {
-    int addrlen = sizeof(address);
-    char buffer[1024] = {0};
-    while (true) {
-        if ((newSocket = accept(fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
-            perror("accept failed");
-            exit(EXIT_FAILURE);
+    try {
+        server.start();
+        while (1) {
+            sleep(10000);
         }
-
-        memset(buffer, 0, sizeof(buffer));
-        read(newSocket, buffer, sizeof(buffer));
-
-        std::string request(buffer);
-        auto handler = HttpResponseHandlerFactory::createHttpResponseHandler(parseUrl(request));
-        std::string response = "HTTP/1.1 404 Not Found\nContent-Type: text/html\n\n404 Not Found";
-        if (handler) {
-            response = handler->response(request);
-        }
-
-        send(newSocket, response.c_str(), response.length(), 0);
-        close(newSocket);
-    }
-}
-
-HttpServer::~HttpServer() {
-    if (newSocket != 1) {
-        close(newSocket);
-    }
-}
-
-HttpServer::HttpServer(HttpServer::Builder *builder):host(builder->getHost()), port(builder->getPort()) {
-    // 创建套接字
-    if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(host.c_str());
-    address.sin_port = htons(port);
-
-    // 绑定端口
-    if (bind(fd, (struct sockaddr *)&address, sizeof(address))<0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-
-    // 监听连接
-    if (listen(fd, 3) < 0) {
-        perror("listen failed");
-        exit(EXIT_FAILURE);
+    } catch (const std::exception& e) {
+        hv::async::cleanup();
     }
 }

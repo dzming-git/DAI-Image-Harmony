@@ -11,11 +11,11 @@ uint16_t HttpServer::Builder::getPort() {
     return port;
 }
 
-void HttpServer::Builder::setHost(std::string host) {
+HttpServer::Builder& HttpServer::Builder::setHost(std::string host) {
     this->host = host;
 }
 
-void HttpServer::Builder::setPort(uint16_t port) {
+HttpServer::Builder& HttpServer::Builder::setPort(uint16_t port) {
     this->port = port;
 }
 

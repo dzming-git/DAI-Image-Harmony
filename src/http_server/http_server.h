@@ -14,7 +14,7 @@
 #define _HTTP_SERVER_H_
 
 #include <string>
-#include <arpa/inet.h>
+#include "hv/HttpServer.h"
 
 class HttpServer {
 public:
@@ -28,9 +28,8 @@ private:
 
     std::string host;
     uint16_t port;
-    int fd; // 套接字
-    struct sockaddr_in address;  // 地址
-    int newSocket;
+    hv::HttpService router;
+    hv::HttpServer server;
 };
 
 #endif /* _HTTP_SERVER_H_ */

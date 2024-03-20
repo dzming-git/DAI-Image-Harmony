@@ -15,6 +15,7 @@ add_subdirectory(src/image_loaders/local_image)
 add_subdirectory(src/config)
 add_subdirectory(src/consul)
 add_subdirectory(resources/protos)
+add_subdirectory(src/http_server)
 
 # 可执行程序的输出目录
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -35,16 +36,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(SOURCES
     main.cpp
-    # src/http_server/http_server.h
-    # src/http_server/http_server.cpp
-    # src/http_server/http_server_builder.h
-    # src/http_server/http_server_builder.cpp
-    # src/http_server/http_response_handler/http_response_handler_base.h
-    # src/http_server/http_response_handler/http_response_handler_base.cpp
-    # src/http_server/http_response_handler/http_response_handler_factory.h
-    # src/http_server/http_response_handler/http_response_handler_factory.cpp
-    # src/http_server/http_response_handler/http_response_handler_test.h
-    # src/http_server/http_response_handler/http_response_handler_test.cpp
     src/image_loaders/image_loader_base.h
     src/image_loaders/image_loader_base.cpp
     src/image_loaders/image_loader_factory.h
@@ -77,6 +68,7 @@ target_link_libraries(${PROJECT_NAME}
   consul-cpp
   image_harmony_data_grpc_proto
   service_coordinator_data_grpc_proto
+  http_server
   )
 
 # OpenCV
