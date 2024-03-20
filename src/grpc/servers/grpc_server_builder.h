@@ -23,8 +23,8 @@ public:
     ~GRPCServerBuilder();
     GRPCServerBuilder& setHost(std::string);
     std::string getHost();
-    GRPCServerBuilder& setPort(std::string);
-    std::string getPort();
+    GRPCServerBuilder& setPort(int);
+    int getPort();
     GRPCServerBuilder& addService(grpc::Service*);
     GRPCServerBuilder& setMaxSendBytes(int);
     GRPCServerBuilder& setEpollCount(int, int);
@@ -32,7 +32,7 @@ public:
 private:
     grpc::ServerBuilder* serverBuilder;
     std::string host;
-    std::string port;
+    int port;
 };
 
 #endif /* _GRPC_SERVER_BUILDER_H_ */

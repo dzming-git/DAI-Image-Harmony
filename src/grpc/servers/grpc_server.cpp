@@ -3,7 +3,7 @@
 
 GRPCServer::GRPCServer(GRPCServerBuilder* myBuilder, grpc::ServerBuilder* officialBuilder) {
     server = officialBuilder->BuildAndStart();
-    std::cout << "Server listening on " << myBuilder->getHost() + ":" + myBuilder->getPort() << std::endl;
+    std::cout << "Server listening on " << myBuilder->getHost() + ":" + std::to_string(myBuilder->getPort()) << std::endl;
 }
 
 void GRPCServer::start() {

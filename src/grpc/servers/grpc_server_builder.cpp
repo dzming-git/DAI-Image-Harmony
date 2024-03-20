@@ -1,7 +1,7 @@
 #include "grpc/servers/grpc_server.h"
 #include "grpc/servers/grpc_server_builder.h"
 
-GRPCServer::GRPCServerBuilder::GRPCServerBuilder(): host("127.0.0.1"), port("5000") {
+GRPCServer::GRPCServerBuilder::GRPCServerBuilder(): host("127.0.0.1"), port(5000) {
     serverBuilder = new grpc::ServerBuilder();
 }
 
@@ -20,12 +20,12 @@ std::string GRPCServer::GRPCServerBuilder::getHost() {
     return host;
 }
 
-GRPCServer::GRPCServerBuilder &GRPCServer::GRPCServerBuilder::setPort(std::string port) {
+GRPCServer::GRPCServerBuilder &GRPCServer::GRPCServerBuilder::setPort(int port) {
     this->port = port;
     return *this;
 }
 
-std::string GRPCServer::GRPCServerBuilder::getPort() {
+int GRPCServer::GRPCServerBuilder::getPort() {
     return port;
 }
 
@@ -47,6 +47,6 @@ GRPCServer::GRPCServerBuilder &GRPCServer::GRPCServerBuilder::setEpollCount(int 
 }
 
 GRPCServer *GRPCServer::GRPCServerBuilder::build() {
-    serverBuilder->AddListeningPort(host + ":" + port, grpc::InsecureServerCredentials());
+    serverBuilder->AddListeningPort(host + ":" + std::to_string(port), grpc::InsecureServerCredentials());
     return new GRPCServer(this, serverBuilder);
 }
