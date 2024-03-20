@@ -1,7 +1,7 @@
 services:
   - name: image harmony gRPC
     type: gRPC
-    port: 5000
+    port: 8080
     tags: 
       - interface:gRPC
       - support:hikvision
@@ -10,7 +10,7 @@ services:
       - support:opencv video reader(gpu)
   - name: image harmony HTTP
     type: HTTP
-    port: 8080
+    port: 5000
     tags:
       - interface:REST
       - support:hikvision
