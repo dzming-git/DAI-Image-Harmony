@@ -48,7 +48,7 @@ void ImageLoaderController::checkConnections() {
         }
         for (auto& eraseConnectionId : eraseConnectionIds) {
             LOG("connection %lld timeout\n", eraseConnectionId);
-            unregisterImageLoader(eraseConnectionId);
+            disconnectImageLoader(eraseConnectionId);
         }
         std::this_thread::sleep_for(std::chrono::seconds(connectionTimeout / 2));
     }
@@ -105,19 +105,19 @@ bool ImageLoaderController::initImageLoader(std::unordered_map<std::string, std:
     LOG("initImageLoader\n");
     
     // TODO: 暂时粗暴地解决线程安全问题
-    static pthread_mutex_t registerImageLoaderLock;
-    pthread_mutex_lock(&registerImageLoaderLock);
+    static pthread_mutex_t connectImageLoaderLock;
+    pthread_mutex_lock(&connectImageLoaderLock);
     // 用hash值查找已建立的加载器
     if (0 != outLoaderArgsHash) {
         auto imageLoaderIt = loadersMap.find(outLoaderArgsHash);
         // 没有找到，直接返回错误
         if (loadersMap.end() == imageLoaderIt) {
-            pthread_mutex_unlock(&registerImageLoaderLock);
+            pthread_mutex_unlock(&connectImageLoaderLock);
             return false;
         }
         // 重复初始化 跳过
         else {
-            pthread_mutex_unlock(&registerImageLoaderLock);
+            pthread_mutex_unlock(&connectImageLoaderLock);
             return true;
         }
     }
@@ -138,7 +138,7 @@ bool ImageLoaderController::initImageLoader(std::unordered_map<std::string, std:
         }
         // 有这个源的信息，且不是独占
         else if (!isUnique) {
-            pthread_mutex_unlock(&registerImageLoaderLock);
+            pthread_mutex_unlock(&connectImageLoaderLock);
             return true;
         }
         // 有这个源的信息，且是独占，新建
@@ -170,16 +170,16 @@ bool ImageLoaderController::initImageLoader(std::unordered_map<std::string, std:
               << "init image loader" << std::endl
               << "loader args hash:" << outLoaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[outLoaderArgsHash].cnt << std::endl;
-    pthread_mutex_unlock(&registerImageLoaderLock);
+    pthread_mutex_unlock(&connectImageLoaderLock);
     return true;
 }
 
-bool ImageLoaderController::registerImageLoader(int64_t loaderArgsHash, int64_t &outConnectionId) {
-    LOG("registerImageLoader\n");
+bool ImageLoaderController::connectImageLoader(int64_t loaderArgsHash, int64_t &outConnectionId) {
+    LOG("connectImageLoader\n");
     
     // TODO: 暂时粗暴地解决线程安全问题
-    static pthread_mutex_t registerImageLoaderLock;
-    pthread_mutex_lock(&registerImageLoaderLock);
+    static pthread_mutex_t connectImageLoaderLock;
+    pthread_mutex_lock(&connectImageLoaderLock);
     // 用hash值查找已建立的加载器
     if (0 == loaderArgsHash) {
         return false;
@@ -193,7 +193,7 @@ bool ImageLoaderController::registerImageLoader(int64_t loaderArgsHash, int64_t 
 
     outConnectionId = generateInt64Random();
     std::cout << std::endl
-              << "register image loader" << std::endl
+              << "connect image loader" << std::endl
               << "connection ID:" << outConnectionId << std::endl
               << "loader args hash:" << loaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
@@ -201,12 +201,12 @@ bool ImageLoaderController::registerImageLoader(int64_t loaderArgsHash, int64_t 
     connectionsMap.emplace(outConnectionId, ImageLoaderController::ConnectionInfo());
     connectionsMap[outConnectionId].loaderArgsHash = loaderArgsHash;
     connectionsMap[outConnectionId].updateTime();
-    pthread_mutex_unlock(&registerImageLoaderLock);
+    pthread_mutex_unlock(&connectImageLoaderLock);
     return true;
 }
 
-bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
-    LOG("unregisterImageLoader\n");
+bool ImageLoaderController::disconnectImageLoader(int64_t connectionId) {
+    LOG("disconnectImageLoader\n");
     auto connectionInfoIt = connectionsMap.find(connectionId);
     if (connectionsMap.end() == connectionInfoIt) return false;
     connectionsMap.erase(connectionInfoIt);
@@ -217,7 +217,7 @@ bool ImageLoaderController::unregisterImageLoader(int64_t connectionId) {
     int64_t loaderArgsHash = connectionInfoIt->second.loaderArgsHash;
     --loadersMap[loaderArgsHash].cnt;
     std::cout << std::endl
-              << "unregister image loader" << std::endl
+              << "disconnect image loader" << std::endl
               << "connection ID:" << connectionId << std::endl
               << "loader args hash:" << loaderArgsHash << std::endl
               << "connect cnt:" << loadersMap[loaderArgsHash].cnt << std::endl;
